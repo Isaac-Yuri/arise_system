@@ -1,34 +1,153 @@
-import { useState, useMemo } from "react";
+import { useState, useEffect, useMemo } from "react";
+import { createClient } from "@supabase/supabase-js";
 
-const INITIAL_QUESTS = [
-  "Concluir o treino de Calistenia (Mínimo 20 min)",
-  "Estudar Tecnologia / Faculdade de ADS (Mínimo 1h)",
-  "Lavar a moto e organizar o quarto (Mínimo 30 min)",
-];
+// Definição das tipagens do TypeScript com base no seu banco
+interface UserData {
+  id: string;
+  name: string;
+  level: number;
+  xp: number;
+}
+
+interface DailyTask {
+  id: string;
+  user_id: string;
+  title: string;
+  is_completed: boolean;
+}
+
+// Substitua por um UUID real cadastrado na sua tabela public.users para testar
+const USER_ID_TEST = "8b7b1d71-1cad-4069-90f7-b995d1192062";
+
+const supabase = createClient(
+  import.meta.env.VITE_SUPABASE_URL,
+  import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY
+);
 
 export default function Dashboard() {
-  const [done, setDone] = useState<boolean[]>([false, false, false]);
-  const [xp, setXp] = useState(0);
+  const [player, setPlayer] = useState<UserData | null>(null);
+  const [tasks, setTasks] = useState<DailyTask[]>([]);
+  const [loading, setLoading] = useState(true);
   const [claimed, setClaimed] = useState(false);
 
-  const allDone = done.every(Boolean);
-  const completedCount = useMemo(() => done.filter(Boolean).length, [done]);
-  const xpPct = Math.min(100, (xp / 100) * 100);
+  // Carrega os dados do jogador e as tarefas ao montar o componente
+  useEffect(() => {
+    async function loadDashboardData() {
+      try {
+        setLoading(true);
 
-  const toggle = (i: number) => {
+        // 1. Busca dados do usuário
+        const { data: userData, error: userError } = await supabase
+          .from("users")
+          .select("*")
+          .eq("id", USER_ID_TEST)
+          .single();
+        
+        console.log("Dados do usuário carregados:", userData);
+
+        if (userError) throw userError;
+
+        // 2. Busca as tarefas diárias do usuário
+        const { data: tasksData, error: tasksError } = await supabase
+          .from("daily_tasks")
+          .select("*")
+          .eq("user_id", USER_ID_TEST)
+          .order("created_at", { ascending: true });
+
+        if (tasksError) throw tasksError;
+
+        setPlayer(userData);
+        setTasks(tasksData || []);
+      } catch (err) {
+        console.error("Erro ao carregar dados do sistema Arise:", err);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    loadDashboardData();
+  }, []);
+
+  // Cálculos de progresso derivados do estado real do banco
+  const allDone = tasks.length > 0 && tasks.every((t) => t.is_completed);
+  const completedCount = useMemo(() => tasks.filter((t) => t.is_completed).length, [tasks]);
+  const xpPct = player ? Math.min(100, (player.xp / 100) * 100) : 0;
+
+  // Atualiza o estado da tarefa em tempo real no banco de dados ao clicar
+  const toggleTask = async (taskId: string, currentStatus: boolean) => {
     if (claimed) return;
-    setDone((prev) => prev.map((v, idx) => (idx === i ? !v : v)));
+
+    // Otimismo na UI: atualiza localmente primeiro para resposta instantânea
+    setTasks((prev) =>
+      prev.map((t) => (t.id === taskId ? { ...t, is_completed: !currentStatus } : t))
+    );
+
+    const { error } = await supabase
+      .from("daily_tasks")
+      .update({ is_completed: !currentStatus })
+      .eq("id", taskId);
+
+    if (error) {
+      console.error("Erro ao atualizar tarefa:", error);
+      // Reverte o estado em caso de erro no servidor
+      setTasks((prev) =>
+        prev.map((t) => (t.id === taskId ? { ...t, is_completed: currentStatus } : t))
+      );
+    }
   };
 
-  const claim = () => {
-    if (!allDone || claimed) return;
-    setXp((x) => Math.min(100, x + 25));
+  // Recompensa: Adiciona XP, calcula Level Up e limpa as tarefas no banco
+  const claimReward = async () => {
+    if (!allDone || claimed || !player) return;
+
     setClaimed(true);
-    setTimeout(() => {
-      setDone([false, false, false]);
+
+    let newXp = player.xp + 25;
+    let newLevel = player.level;
+
+    // Mecânica de Level Up ao atingir ou passar de 100 XP
+    if (newXp >= 100) {
+      newLevel += 1;
+      newXp = newXp - 100; // Mantém o restante do XP para o próximo nível
+    }
+
+    try {
+      // 1. Atualiza dados do jogador no Supabase
+      const { error: userUpdateError } = await supabase
+        .from("users")
+        .update({ xp: newXp, level: newLevel })
+        .eq("id", player.id);
+
+      if (userUpdateError) throw userUpdateError;
+
+      // 2. Reseta o status das tarefas diárias para falso no banco
+      const { error: tasksUpdateError } = await supabase
+        .from("daily_tasks")
+        .update({ is_completed: false })
+        .eq("user_id", player.id);
+
+      if (tasksUpdateError) throw tasksUpdateError;
+
+      // Sincroniza o estado local após a animação de sucesso
+      setTimeout(() => {
+        setPlayer((prev) => (prev ? { ...prev, xp: newXp, level: newLevel } : null));
+        setTasks((prev) => prev.map((t) => ({ ...t, is_completed: false })));
+        setClaimed(false);
+      }, 1200);
+
+    } catch (err) {
+      console.error("Erro ao computar recompensa:", err);
       setClaimed(false);
-    }, 1200);
+    }
   };
+
+  if (loading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-[#05060a] font-mono text-xs uppercase tracking-widest text-sky-400 animate-pulse">
+        [ Sincronizando com o Sistema... ]
+      </div>
+    );
+  }
 
   return (
     <main className="min-h-screen w-full bg-[#05060a] text-zinc-100 font-sans antialiased selection:bg-sky-500/40">
@@ -39,6 +158,7 @@ export default function Dashboard() {
       </div>
 
       <div className="relative mx-auto flex min-h-screen w-full max-w-md flex-col gap-5 px-4 py-6 sm:px-6 sm:py-8 md:max-w-xl md:gap-6 md:px-8 md:py-10 lg:max-w-2xl lg:px-10 lg:py-12">
+        
         {/* 1. STATUS PANEL */}
         <header className="rounded-xl border border-sky-500/20 bg-zinc-950/70 p-4 shadow-[0_0_30px_-15px_rgba(56,189,248,0.6)] backdrop-blur md:p-5 lg:p-6">
           <div className="flex items-center justify-between gap-3 md:gap-4">
@@ -47,11 +167,11 @@ export default function Dashboard() {
                 Player:
               </p>
               <h1 className="truncate text-base font-bold uppercase tracking-wider text-zinc-50 sm:text-lg md:text-xl">
-                ISAAC YURI
+                {player?.name || "UNKNOWN MONARCH"}
               </h1>
             </div>
             <span className="shrink-0 rounded-md border border-sky-400/60 bg-sky-500/5 px-2.5 py-1 text-[10px] font-bold uppercase tracking-widest text-sky-300 shadow-[0_0_15px_-5px_rgba(56,189,248,0.8)] md:text-xs md:px-3">
-              LVL 01
+              LVL {String(player?.level || 1).padStart(2, "0")}
             </span>
           </div>
 
@@ -63,7 +183,7 @@ export default function Dashboard() {
               />
             </div>
             <p className="mt-1.5 text-right text-[10px] font-mono uppercase tracking-widest text-zinc-500">
-              XP: {xp} / 100
+              XP: {player?.xp || 0} / 100
             </p>
           </div>
         </header>
@@ -79,69 +199,76 @@ export default function Dashboard() {
             </h2>
           </div>
 
-          <ul className="flex flex-col gap-2.5 md:gap-3">
-            {INITIAL_QUESTS.map((quest, i) => {
-              const checked = done[i];
-              return (
-                <li key={i}>
-                  <label
-                    className={`group flex cursor-pointer items-start gap-3 rounded-lg border px-3 py-3 transition-all md:px-4 md:py-3.5 ${
-                      checked
-                        ? "border-sky-500/30 bg-sky-500/5"
-                        : "border-zinc-800 bg-zinc-950/40 hover:border-zinc-700"
-                    }`}
-                  >
-                    <input
-                      type="checkbox"
-                      checked={checked}
-                      onChange={() => toggle(i)}
-                      className="sr-only"
-                    />
-                    <span
-                      className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded border transition-all ${
+          {tasks.length === 0 ? (
+            <p className="text-center py-6 font-mono text-xs text-zinc-600 uppercase tracking-wider">
+              Nenhuma quest ativa no painel.
+            </p>
+          ) : (
+            <ul className="flex flex-col gap-2.5 md:gap-3">
+              {tasks.map((task) => {
+                const checked = task.is_completed;
+                return (
+                  <li key={task.id}>
+                    <label
+                      className={`group flex cursor-pointer items-start gap-3 rounded-lg border px-3 py-3 transition-all md:px-4 md:py-3.5 ${
                         checked
-                          ? "border-sky-400 bg-sky-500/20 shadow-[0_0_10px_rgba(56,189,248,0.7)]"
-                          : "border-zinc-600 group-hover:border-sky-500/60"
+                          ? "border-sky-500/30 bg-sky-500/5"
+                          : "border-zinc-800 bg-zinc-950/40 hover:border-zinc-700"
                       }`}
                     >
-                      {checked && (
-                        <svg
-                          viewBox="0 0 16 16"
-                          className="h-3.5 w-3.5 text-sky-300"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="3"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        >
-                          <path d="M3 8.5l3.5 3.5L13 5" />
-                        </svg>
-                      )}
-                    </span>
-                    <span
-                      className={`text-sm leading-snug transition-all ${
-                        checked
-                          ? "text-zinc-500 line-through opacity-60"
-                          : "text-zinc-200"
-                      }`}
-                    >
-                      {quest}
-                    </span>
-                  </label>
-                </li>
-              );
-            })}
-          </ul>
+                      <input
+                        type="checkbox"
+                        checked={checked}
+                        onChange={() => toggleTask(task.id, checked)}
+                        className="sr-only"
+                        disabled={claimed}
+                      />
+                      <span
+                        className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded border transition-all ${
+                          checked
+                            ? "border-sky-400 bg-sky-500/20 shadow-[0_0_10px_rgba(56,189,248,0.7)]"
+                            : "border-zinc-600 group-hover:border-sky-500/60"
+                        }`}
+                      >
+                        {checked && (
+                          <svg
+                            viewBox="0 0 16 16"
+                            className="h-3.5 w-3.5 text-sky-300"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="3"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          >
+                            <path d="M3 8.5l3.5 3.5L13 5" />
+                          </svg>
+                        )}
+                      </span>
+                      <span
+                        className={`text-sm leading-snug transition-all ${
+                          checked
+                            ? "text-zinc-500 line-through opacity-60"
+                            : "text-zinc-200"
+                        }`}
+                      >
+                        {task.title}
+                      </span>
+                    </label>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
 
           <p className="mt-3 text-center font-mono text-[10px] uppercase tracking-widest text-zinc-600 md:mt-4">
-            {completedCount} / {INITIAL_QUESTS.length} objetivos completos
+            {completedCount} / {tasks.length} objetivos completos
           </p>
         </section>
 
         {/* 3. CLAIM REWARD */}
         <button
           type="button"
-          onClick={claim}
+          onClick={claimReward}
           disabled={!allDone || claimed}
           className={`w-full rounded-xl border px-4 py-3.5 font-mono text-xs font-bold uppercase tracking-[0.2em] transition-all duration-300 sm:text-sm md:py-4 md:text-base ${
             allDone && !claimed
