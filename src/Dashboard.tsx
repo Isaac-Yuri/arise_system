@@ -3,7 +3,7 @@ import { useState, useMemo } from "react";
 const INITIAL_QUESTS = [
   "Concluir o treino de Calistenia (Mínimo 20 min)",
   "Estudar Tecnologia / Faculdade de ADS (Mínimo 1h)",
-  "Realizar aporte no caixa do Casamento / Moto",
+  "Lavar a moto e organizar o quarto (Mínimo 30 min)",
 ];
 
 export default function Dashboard() {
