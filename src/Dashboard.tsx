@@ -1,17 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
 import { useState, useMemo } from "react";
-
-export const Route = createFileRoute("/")({
-  head: () => ({
-    meta: [
-      { title: "Sistema Arise — Solo Leveling Productivity" },
-      { name: "description", content: "Suba de nível na vida real. Sistema de produtividade gamificado inspirado em Solo Leveling." },
-      { property: "og:title", content: "Sistema Arise" },
-      { property: "og:description", content: "Suba de nível na vida real." },
-    ],
-  }),
-  component: Index,
-});
 
 const INITIAL_QUESTS = [
   "Concluir o treino de Calistenia (Mínimo 20 min)",
@@ -19,7 +6,7 @@ const INITIAL_QUESTS = [
   "Realizar aporte no caixa do Casamento / Moto",
 ];
 
-function Index() {
+export default function Dashboard() {
   const [done, setDone] = useState<boolean[]>([false, false, false]);
   const [xp, setXp] = useState(0);
   const [claimed, setClaimed] = useState(false);
