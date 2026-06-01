@@ -1,6 +1,7 @@
 import { createBrowserRouter, RouterProvider } from 'react-router'
 import Dashboard from './Dashboard'
-import Login from './login'
+import Login from './Login'
+import Cadastro from './Cadastro'
 
 const router = createBrowserRouter([
   {
@@ -11,6 +12,10 @@ const router = createBrowserRouter([
     path: "/login",
     element: <Login />,
   },
+  {
+    path: "/cadastro",
+    element: <Cadastro />,
+  }
 ])
 
 export default function App() {

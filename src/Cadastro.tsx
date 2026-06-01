@@ -8,8 +8,9 @@ const supabase = createClient(
   import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY
 );
 
-export default function Login() {
+export default function Cadastro() {
   const navigate = useNavigate();
+  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -21,36 +22,27 @@ export default function Login() {
     setErrorMsg("");
 
     try {
-      // Autenticação Real com Supabase Auth
-      const { error } = await supabase.auth.signInWithPassword({
+      // Cria a conta do usuário no Supabase Auth
+      const { data, error } = await supabase.auth.signUp({
         email,
         password,
-      });
-
-      if (error) throw error;
-
-      navigate("/");
-    } catch (err: any) {
-      console.error("Erro na autenticação:", err);
-      setErrorMsg(err.message || "Falha na autenticação do Hunter.");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleGoogleLogin = async () => {
-    try {
-      setIsLoading(true);
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: "google",
         options: {
-          redirectTo: window.location.origin,
+          data: {
+            full_name: name, // Metadados enviados para a Trigger automática do banco
+          },
         },
       });
+
       if (error) throw error;
+
+      // Cadastro bem-sucedido! Redireciona o novo Hunter para o Dashboard
+      if (data?.user) {
+        navigate("/");
+      }
     } catch (err: any) {
-      console.error("Erro ao autenticar com o Google:", err);
-      setErrorMsg(err.message || "Erro ao conectar com o Google.");
+      console.error("Erro no registro do Hunter:", err);
+      setErrorMsg(err.message || "Falha ao registrar novo Hunter.");
+    } finally {
       setIsLoading(false);
     }
   };
@@ -68,13 +60,13 @@ export default function Login() {
         <div className="absolute bottom-0 right-0 h-72 w-72 rounded-full bg-indigo-500/10 blur-3xl md:h-96 md:w-96" />
       </div>
 
-      {/* Top-right link back home */}
+      {/* Top-right link back */}
       <div className="absolute top-4 right-4 z-10">
         <Link
-          to="/"
+          to="/login"
           className="rounded-md border border-zinc-800 px-3 py-1.5 text-[10px] font-mono uppercase tracking-widest text-zinc-500 transition-colors hover:border-sky-500/40 hover:text-sky-400"
         >
-          ← Voltar
+          ← Voltar para o Login
         </Link>
       </div>
 
@@ -88,10 +80,10 @@ export default function Login() {
               Sistema Arise
             </p>
             <h1 className="mt-1 text-lg font-bold uppercase tracking-wider text-zinc-50 sm:text-xl md:text-2xl">
-              Acessar Conta
+              Criar Conta de Hunter
             </h1>
             <p className="mt-1 text-[10px] font-mono uppercase tracking-widest text-zinc-600">
-              Autenticação de Hunter
+              Desperte o seu verdadeiro potencial
             </p>
           </div>
 
@@ -105,10 +97,22 @@ export default function Login() {
           {/* Form */}
           <form onSubmit={handleSubmit} className="flex flex-col gap-4">
             <div>
-              <label
-                htmlFor="email"
-                className="mb-1.5 block text-[10px] font-mono uppercase tracking-widest text-zinc-500"
-              >
+              <label htmlFor="name" className="mb-1.5 block text-[10px] font-mono uppercase tracking-widest text-zinc-500">
+                Nome do Hunter (Codinome)
+              </label>
+              <input
+                id="name"
+                type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="Ex: Sung Jin-Woo"
+                required
+                className={`${inputBase} ${inputIdle}`}
+              />
+            </div>
+
+            <div>
+              <label htmlFor="email" className="mb-1.5 block text-[10px] font-mono uppercase tracking-widest text-zinc-500">
                 Email
               </label>
               <input
@@ -123,10 +127,7 @@ export default function Login() {
             </div>
 
             <div>
-              <label
-                htmlFor="password"
-                className="mb-1.5 block text-[10px] font-mono uppercase tracking-widest text-zinc-500"
-              >
+              <label htmlFor="password" className="mb-1.5 block text-[10px] font-mono uppercase tracking-widest text-zinc-500">
                 Senha
               </label>
               <input
@@ -134,7 +135,7 @@ export default function Login() {
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••"
+                placeholder="Mínimo 6 caracteres"
                 required
                 className={`${inputBase} ${inputIdle}`}
               />
@@ -149,35 +150,28 @@ export default function Login() {
                   : "border-sky-400 bg-gradient-to-b from-sky-500/20 to-sky-500/5 text-sky-200 shadow-[0_0_25px_-5px_rgba(56,189,248,0.9)] hover:from-sky-500/30 hover:to-sky-500/10 hover:shadow-[0_0_35px_-2px_rgba(56,189,248,1)] active:scale-[0.98]"
               }`}
             >
-              {isLoading ? "[ AUTENTICANDO... ]" : "[ ENTRAR ]"}
+              {isLoading ? "[ ENVIANDO DADOS... ]" : "[ DESPERTAR CONTA ]"}
             </button>
+
+            <div className="my-5 flex items-center gap-3">
+                <div className="h-px flex-1 bg-zinc-800" />
+                <span className="text-[10px] font-mono uppercase tracking-widest text-zinc-600">ou</span>
+                <div className="h-px flex-1 bg-zinc-800" />
+            </div>
+
+            <GoogleLoginButton onError={setErrorMsg} />
           </form>
 
-          {/* Divider */}
-          <div className="my-5 flex items-center gap-3">
-            <div className="h-px flex-1 bg-zinc-800" />
-            <span className="text-[10px] font-mono uppercase tracking-widest text-zinc-600">
-              ou
-            </span>
-            <div className="h-px flex-1 bg-zinc-800" />
-          </div>
-
-          {/* Google button */}
-          <GoogleLoginButton onError={setErrorMsg} />
-
           {/* Footer links */}
-          <div className="mt-5 flex items-center justify-between">
+          <div className="mt-6 text-center border-t border-zinc-800/60 pt-4">
+            <span className="text-[10px] font-mono uppercase tracking-widest text-zinc-600">
+              Já possui uma conta ativa?{" "}
+            </span>
             <Link
-              to="/recuperar"
-              className="text-[10px] font-mono uppercase tracking-widest text-zinc-600 transition-colors hover:text-sky-400"
+              to="/login"
+              className="text-[10px] font-mono uppercase tracking-widest text-sky-400 transition-colors hover:text-sky-300 ml-1"
             >
-              Esqueceu a senha?
-            </Link>
-            <Link
-              to="/cadastro"
-              className="text-[10px] font-mono uppercase tracking-widest text-zinc-600 transition-colors hover:text-sky-400"
-            >
-              Criar conta
+              Fazer Login
             </Link>
           </div>
         </div>
