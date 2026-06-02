@@ -26,7 +26,6 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [claimed, setClaimed] = useState(false);
 
-  // Novos Estados: Controlam a abertura do campo e o texto da nova tarefa
   const [isAddingTask, setIsAddingTask] = useState(false);
   const [newTaskTitle, setNewTaskTitle] = useState("");
   const [isSubmittingTask, setIsSubmittingTask] = useState(false);
@@ -98,7 +97,6 @@ export default function Dashboard() {
     }
   };
 
-  // Nova Função: Envia a nova missão para a tabela daily_tasks no Supabase
   const handleCreateTask = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newTaskTitle.trim() || !player || isSubmittingTask) return;
@@ -121,9 +119,9 @@ export default function Dashboard() {
       if (error) throw error;
 
       if (data) {
-        setTasks((prev) => [...prev, data]); // Adiciona a nova tarefa na lista da tela
-        setNewTaskTitle(""); // Limpa o campo
-        setIsAddingTask(false); // Fecha o painel de inserção
+        setTasks((prev) => [...prev, data]);
+        setNewTaskTitle("");
+        setIsAddingTask(false);
       }
     } catch (err) {
       console.error("Erro ao criar nova quest:", err);
@@ -133,15 +131,10 @@ export default function Dashboard() {
   };
 
   const claimReward = async () => {
-    // Impede cliques duplos se não tiver tudo feito, se já foi resgatado ou se não há player
     if (!allDone || claimed || !player) return;
 
     setClaimed(true);
     
-    // 1. Força IMEDIATAMENTE o estado visual da tela a ir para false (Otimista)
-    // Isso evita que o usuário veja as tarefas marcadas enquanto o banco processa
-    setTasks((prev) => prev.map((t) => ({ ...t, is_completed: false })));
-
     let newXp = player.xp + 25;
     let newLevel = player.level;
 
@@ -151,7 +144,7 @@ export default function Dashboard() {
     }
 
     try {
-      // 2. Atualiza o XP e o Level do jogador no Supabase
+      // Atualiza APENAS o XP e o Nível do usuário no banco
       const { error: userUpdateError } = await supabase
         .from("users")
         .update({ xp: newXp, level: newLevel })
@@ -159,30 +152,12 @@ export default function Dashboard() {
 
       if (userUpdateError) throw userUpdateError;
 
-      // 3. Reseta TODAS as tarefas daquele usuário específico para falso no banco
-      const { error: tasksUpdateError } = await supabase
-        .from("daily_tasks")
-        .update({ is_completed: false })
-        .eq("user_id", player.id); // Garante que só mexe nas quests deste Hunter
-
-      if (tasksUpdateError) throw tasksUpdateError;
-
-      // 4. Se tudo deu certo no banco, atualiza o status do Player na tela
+      // Atualiza o estado do player localmente para refletir na interface
       setPlayer((prev) => (prev ? { ...prev, xp: newXp, level: newLevel } : null));
 
     } catch (err) {
-      console.error("Erro ao computar recompensa e resetar missões:", err);
-      
-      // CASO DÊ ERRO: Reverte o estado das tarefas para true para o usuário não perder o progresso
-      const { data: rollbackTasks } = await supabase
-        .from("daily_tasks")
-        .select("*")
-        .eq("user_id", player.id)
-        .order("created_at", { ascending: true });
-        
-      if (rollbackTasks) setTasks(rollbackTasks);
+      console.error("Erro ao computar recompensa:", err);
     } finally {
-      // Libera o botão novamente após a animação/processamento
       setClaimed(false);
     }
   };
@@ -204,7 +179,6 @@ export default function Dashboard() {
 
       <div className="relative mx-auto flex min-h-screen w-full max-w-md flex-col gap-5 px-4 py-6 sm:px-6 sm:py-8 md:max-w-xl md:gap-6 md:px-8 md:py-10 lg:max-w-2xl lg:px-10 lg:py-12">
         
-        {/* 1. STATUS PANEL */}
         <header className="rounded-xl border border-sky-500/20 bg-zinc-950/70 p-4 shadow-[0_0_30px_-15px_rgba(56,189,248,0.6)] backdrop-blur md:p-5 lg:p-6">
           <div className="flex items-center justify-between gap-3 md:gap-4">
             <div className="min-w-0">
@@ -233,10 +207,8 @@ export default function Dashboard() {
           </div>
         </header>
 
-        {/* 2. DAILY QUESTS */}
         <section className="flex-1 rounded-xl border border-zinc-800 bg-zinc-900/80 p-4 backdrop-blur md:p-5 lg:p-6">
           
-          {/* Header da Seção com o Novo Botão de "+" */}
           <div className="mb-4 border-b border-zinc-800 pb-2.5 flex items-center justify-between">
             <div>
               <p className="text-[10px] font-medium uppercase tracking-[0.3em] text-sky-400/80">
@@ -247,7 +219,6 @@ export default function Dashboard() {
               </h2>
             </div>
             
-            {/* Botão Interativo para alternar o campo de texto */}
             <button
               type="button"
               onClick={() => setIsAddingTask(!isAddingTask)}
@@ -260,7 +231,6 @@ export default function Dashboard() {
             </button>
           </div>
 
-          {/* Form Dinâmico: Aparece na tela ao clicar no "+" */}
           {isAddingTask && (
             <form onSubmit={handleCreateTask} className="mb-4 animate-in fade-in slide-in-from-top-2 duration-200 flex gap-2">
               <input
@@ -292,20 +262,14 @@ export default function Dashboard() {
                 const checked = task.is_completed;
                 return (
                   <li key={task.id}>
-                    <label
+                    <div
+                      onClick={() => toggleTask(task.id, checked)}
                       className={`group flex cursor-pointer items-start gap-3 rounded-lg border px-3 py-3 transition-all md:px-4 md:py-3.5 ${
                         checked
                           ? "border-sky-500/30 bg-sky-500/5"
                           : "border-zinc-800 bg-zinc-950/40 hover:border-zinc-700"
                       }`}
                     >
-                      <input
-                        type="checkbox"
-                        checked={checked}
-                        onChange={() => toggleTask(task.id, checked)}
-                        className="sr-only"
-                        disabled={claimed}
-                      />
                       <span
                         className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded border transition-all ${
                           checked
@@ -314,15 +278,30 @@ export default function Dashboard() {
                         }`}
                       >
                         {checked && (
-                          <svg viewBox="0 0 16 16" className="h-3.5 w-3.5 text-sky-300" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                          <svg
+                            viewBox="0 0 16 16"
+                            className="h-3.5 w-3.5 text-sky-300"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="3"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          >
                             <path d="M3 8.5l3.5 3.5L13 5" />
                           </svg>
                         )}
                       </span>
-                      <span className={`text-sm leading-snug transition-all ${checked ? "text-zinc-500 line-through opacity-60" : "text-zinc-200"}`}>
+                      
+                      <span
+                        className={`text-sm leading-snug transition-all select-none ${
+                          checked
+                            ? "text-zinc-500 line-through opacity-60"
+                            : "text-zinc-200"
+                        }`}
+                      >
                         {task.title}
                       </span>
-                    </label>
+                    </div>
                   </li>
                 );
               })}
@@ -334,7 +313,6 @@ export default function Dashboard() {
           </p>
         </section>
 
-        {/* 3. CLAIM REWARD */}
         <button
           type="button"
           onClick={claimReward}
