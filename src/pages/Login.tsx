@@ -1,16 +1,15 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router";
 import { createClient } from "@supabase/supabase-js";
-import GoogleLoginButton from "./components/GoogleLoginButton";
+import GoogleLoginButton from "../components/GoogleLoginButton";
 
 const supabase = createClient(
   import.meta.env.VITE_SUPABASE_URL,
   import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY
 );
 
-export default function Cadastro() {
+export default function Login() {
   const navigate = useNavigate();
-  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -22,27 +21,36 @@ export default function Cadastro() {
     setErrorMsg("");
 
     try {
-      // Cria a conta do usuário no Supabase Auth
-      const { data, error } = await supabase.auth.signUp({
+      // Autenticação Real com Supabase Auth
+      const { error } = await supabase.auth.signInWithPassword({
         email,
         password,
-        options: {
-          data: {
-            full_name: name, // Metadados enviados para a Trigger automática do banco
-          },
-        },
       });
 
       if (error) throw error;
 
-      // Cadastro bem-sucedido! Redireciona o novo Hunter para o Dashboard
-      if (data?.user) {
-        navigate("/");
-      }
+      navigate("/");
     } catch (err: any) {
-      console.error("Erro no registro do Hunter:", err);
-      setErrorMsg(err.message || "Falha ao registrar novo Hunter.");
+      console.error("Erro na autenticação:", err);
+      setErrorMsg(err.message || "Falha na autenticação do Hunter.");
     } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleGoogleLogin = async () => {
+    try {
+      setIsLoading(true);
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo: window.location.origin,
+        },
+      });
+      if (error) throw error;
+    } catch (err: any) {
+      console.error("Erro ao autenticar com o Google:", err);
+      setErrorMsg(err.message || "Erro ao conectar com o Google.");
       setIsLoading(false);
     }
   };
@@ -60,13 +68,13 @@ export default function Cadastro() {
         <div className="absolute bottom-0 right-0 h-72 w-72 rounded-full bg-indigo-500/10 blur-3xl md:h-96 md:w-96" />
       </div>
 
-      {/* Top-right link back */}
+      {/* Top-right link back home */}
       <div className="absolute top-4 right-4 z-10">
         <Link
-          to="/login"
+          to="/"
           className="rounded-md border border-zinc-800 px-3 py-1.5 text-[10px] font-mono uppercase tracking-widest text-zinc-500 transition-colors hover:border-sky-500/40 hover:text-sky-400"
         >
-          ← Voltar para o Login
+          ← Voltar
         </Link>
       </div>
 
@@ -80,10 +88,10 @@ export default function Cadastro() {
               Sistema Arise
             </p>
             <h1 className="mt-1 text-lg font-bold uppercase tracking-wider text-zinc-50 sm:text-xl md:text-2xl">
-              Criar Conta de Hunter
+              Acessar Conta
             </h1>
             <p className="mt-1 text-[10px] font-mono uppercase tracking-widest text-zinc-600">
-              Desperte o seu verdadeiro potencial
+              Autenticação de Hunter
             </p>
           </div>
 
@@ -97,22 +105,10 @@ export default function Cadastro() {
           {/* Form */}
           <form onSubmit={handleSubmit} className="flex flex-col gap-4">
             <div>
-              <label htmlFor="name" className="mb-1.5 block text-[10px] font-mono uppercase tracking-widest text-zinc-500">
-                Nome do Hunter (Codinome)
-              </label>
-              <input
-                id="name"
-                type="text"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="Ex: Sung Jin-Woo"
-                required
-                className={`${inputBase} ${inputIdle}`}
-              />
-            </div>
-
-            <div>
-              <label htmlFor="email" className="mb-1.5 block text-[10px] font-mono uppercase tracking-widest text-zinc-500">
+              <label
+                htmlFor="email"
+                className="mb-1.5 block text-[10px] font-mono uppercase tracking-widest text-zinc-500"
+              >
                 Email
               </label>
               <input
@@ -127,7 +123,10 @@ export default function Cadastro() {
             </div>
 
             <div>
-              <label htmlFor="password" className="mb-1.5 block text-[10px] font-mono uppercase tracking-widest text-zinc-500">
+              <label
+                htmlFor="password"
+                className="mb-1.5 block text-[10px] font-mono uppercase tracking-widest text-zinc-500"
+              >
                 Senha
               </label>
               <input
@@ -135,7 +134,7 @@ export default function Cadastro() {
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="Mínimo 6 caracteres"
+                placeholder="••••••••"
                 required
                 className={`${inputBase} ${inputIdle}`}
               />
@@ -150,28 +149,35 @@ export default function Cadastro() {
                   : "border-sky-400 bg-gradient-to-b from-sky-500/20 to-sky-500/5 text-sky-200 shadow-[0_0_25px_-5px_rgba(56,189,248,0.9)] hover:from-sky-500/30 hover:to-sky-500/10 hover:shadow-[0_0_35px_-2px_rgba(56,189,248,1)] active:scale-[0.98]"
               }`}
             >
-              {isLoading ? "[ ENVIANDO DADOS... ]" : "[ DESPERTAR CONTA ]"}
+              {isLoading ? "[ AUTENTICANDO... ]" : "[ ENTRAR ]"}
             </button>
-
-            <div className="my-5 flex items-center gap-3">
-                <div className="h-px flex-1 bg-zinc-800" />
-                <span className="text-[10px] font-mono uppercase tracking-widest text-zinc-600">ou</span>
-                <div className="h-px flex-1 bg-zinc-800" />
-            </div>
-
-            <GoogleLoginButton onError={setErrorMsg} />
           </form>
 
-          {/* Footer links */}
-          <div className="mt-6 text-center border-t border-zinc-800/60 pt-4">
+          {/* Divider */}
+          <div className="my-5 flex items-center gap-3">
+            <div className="h-px flex-1 bg-zinc-800" />
             <span className="text-[10px] font-mono uppercase tracking-widest text-zinc-600">
-              Já possui uma conta ativa?{" "}
+              ou
             </span>
+            <div className="h-px flex-1 bg-zinc-800" />
+          </div>
+
+          {/* Google button */}
+          <GoogleLoginButton onError={setErrorMsg} />
+
+          {/* Footer links */}
+          <div className="mt-5 flex items-center justify-between">
             <Link
-              to="/login"
-              className="text-[10px] font-mono uppercase tracking-widest text-sky-400 transition-colors hover:text-sky-300 ml-1"
+              to="/recuperar"
+              className="text-[10px] font-mono uppercase tracking-widest text-zinc-600 transition-colors hover:text-sky-400"
             >
-              Fazer Login
+              Esqueceu a senha?
+            </Link>
+            <Link
+              to="/cadastro"
+              className="text-[10px] font-mono uppercase tracking-widest text-zinc-600 transition-colors hover:text-sky-400"
+            >
+              Criar conta
             </Link>
           </div>
         </div>
