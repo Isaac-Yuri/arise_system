@@ -21,7 +21,7 @@ export default function GoogleLoginButton({ onError }: GoogleLoginButtonProps) {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
-          redirectTo: window.location.origin, // Redireciona o Hunter de volta para a Home após autenticar
+          redirectTo: window.location.origin + window.location.pathname,
         },
       });
 
