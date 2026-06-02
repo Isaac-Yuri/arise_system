@@ -16,9 +16,6 @@ interface DailyTask {
   is_completed: boolean;
 }
 
-// Substitua por um UUID real cadastrado na sua tabela public.users para testar
-const USER_ID_TEST = "8b7b1d71-1cad-4069-90f7-b995d1192062";
-
 const supabase = createClient(
   import.meta.env.VITE_SUPABASE_URL,
   import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY
@@ -32,41 +29,51 @@ export default function Dashboard() {
 
   // Carrega os dados do jogador e as tarefas ao montar o componente
   useEffect(() => {
-    async function loadDashboardData() {
-      try {
-        setLoading(true);
+  async function loadDashboardData() {
+    try {
+      setLoading(true);
 
-        // 1. Busca dados do usuário
-        const { data: userData, error: userError } = await supabase
-          .from("users")
-          .select("*")
-          .eq("id", USER_ID_TEST)
-          .single();
-        
-        console.log("Dados do usuário carregados:", userData);
+      // 1. Pega o usuário logado no momento no Supabase Auth
+      const { data: { user } } = await supabase.auth.getUser();
 
-        if (userError) throw userError;
-
-        // 2. Busca as tarefas diárias do usuário
-        const { data: tasksData, error: tasksError } = await supabase
-          .from("daily_tasks")
-          .select("*")
-          .eq("user_id", USER_ID_TEST)
-          .order("created_at", { ascending: true });
-
-        if (tasksError) throw tasksError;
-
-        setPlayer(userData);
-        setTasks(tasksData || []);
-      } catch (err) {
-        console.error("Erro ao carregar dados do sistema Arise:", err);
-      } finally {
+      if (!user) {
+        console.warn("Nenhum Hunter autenticado encontrado.");
         setLoading(false);
+        return;
       }
-    }
 
-    loadDashboardData();
-  }, []);
+      // 2. Busca dados do usuário usando o ID real dele
+      const { data: userDataArray, error: userError } = await supabase
+        .from("users")
+        .select("*")
+        .eq("id", user.id);
+
+      if (userError) throw userError;
+
+      // 3. Busca as tarefas diárias do usuário logado
+      const { data: tasksData, error: tasksError } = await supabase
+        .from("daily_tasks")
+        .select("*")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: true });
+
+      if (tasksError) throw tasksError;
+
+      if (!userDataArray || userDataArray.length === 0) {
+        setPlayer({ id: user.id, name: "MONARCA ADORMECIDO", level: 1, xp: 0 });
+      } else {
+        setPlayer(userDataArray[0]);
+      }
+      setTasks(tasksData || []);
+    } catch (err) {
+      console.error("Erro ao carregar dados do sistema Arise:", err);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  loadDashboardData();
+}, []);
 
   // Cálculos de progresso derivados do estado real do banco
   const allDone = tasks.length > 0 && tasks.every((t) => t.is_completed);
