@@ -1,6 +1,11 @@
 import { useState, useEffect, useMemo } from "react";
 import { createClient } from "@supabase/supabase-js";
 
+// importações dos subcomponentes
+import { ProfileHeader } from "../components/ProfileHeader";
+import { QuestForm } from "../components/QuestForm";
+import { QuestItem } from "../components/QuestItem";
+
 interface UserData {
   id: string;
   name: string;
@@ -34,13 +39,8 @@ export default function Dashboard() {
     async function loadDashboardData() {
       try {
         setLoading(true);
-
         const { data: { user } } = await supabase.auth.getUser();
-
-        if (!user) {
-          setLoading(false);
-          return;
-        }
+        if (!user) { setLoading(false); return; }
 
         const { data: userDataArray, error: userError } = await supabase
           .from("users")
@@ -69,7 +69,6 @@ export default function Dashboard() {
         setLoading(false);
       }
     }
-
     loadDashboardData();
   }, []);
 
@@ -79,21 +78,34 @@ export default function Dashboard() {
 
   const toggleTask = async (taskId: string, currentStatus: boolean) => {
     if (claimed) return;
-
-    setTasks((prev) =>
-      prev.map((t) => (t.id === taskId ? { ...t, is_completed: !currentStatus } : t))
-    );
-
-    const { error } = await supabase
-      .from("daily_tasks")
-      .update({ is_completed: !currentStatus })
-      .eq("id", taskId);
-
+    setTasks((prev) => prev.map((t) => (t.id === taskId ? { ...t, is_completed: !currentStatus } : t)));
+    
+    const { error } = await supabase.from("daily_tasks").update({ is_completed: !currentStatus }).eq("id", taskId);
     if (error) {
-      console.error("Erro ao atualizar tarefa:", error);
-      setTasks((prev) =>
-        prev.map((t) => (t.id === taskId ? { ...t, is_completed: currentStatus } : t))
-      );
+      console.error("Erro ao atualizar status:", error);
+      setTasks((prev) => prev.map((t) => (t.id === taskId ? { ...t, is_completed: currentStatus } : t)));
+    }
+  };
+
+  const updateTaskText = async (taskId: string, newTitle: string) => {
+    const originalTasks = [...tasks];
+    setTasks((prev) => prev.map((t) => (t.id === taskId ? { ...t, title: newTitle } : t)));
+
+    const { error } = await supabase.from("daily_tasks").update({ title: newTitle }).eq("id", taskId);
+    if (error) {
+      console.error("Erro ao editar quest:", error);
+      setTasks(originalTasks);
+    }
+  };
+
+  const deleteTask = async (taskId: string) => {
+    const originalTasks = [...tasks];
+    setTasks((prev) => prev.filter((t) => t.id !== taskId));
+
+    const { error } = await supabase.from("daily_tasks").delete().eq("id", taskId);
+    if (error) {
+      console.error("Erro ao deletar quest:", error);
+      setTasks(originalTasks);
     }
   };
 
@@ -103,21 +115,13 @@ export default function Dashboard() {
 
     try {
       setIsSubmittingTask(true);
-
       const { data, error } = await supabase
         .from("daily_tasks")
-        .insert([
-          {
-            user_id: player.id,
-            title: newTaskTitle.trim(),
-            is_completed: false,
-          },
-        ])
+        .insert([{ user_id: player.id, title: newTaskTitle.trim(), is_completed: false }])
         .select()
         .single();
 
       if (error) throw error;
-
       if (data) {
         setTasks((prev) => [...prev, data]);
         setNewTaskTitle("");
@@ -134,7 +138,6 @@ export default function Dashboard() {
     if (!allDone || claimed || !player) return;
 
     setClaimed(true);
-    
     let newXp = player.xp + 25;
     let newLevel = player.level;
 
@@ -144,17 +147,9 @@ export default function Dashboard() {
     }
 
     try {
-      // Atualiza APENAS o XP e o Nível do usuário no banco
-      const { error: userUpdateError } = await supabase
-        .from("users")
-        .update({ xp: newXp, level: newLevel })
-        .eq("id", player.id);
-
+      const { error: userUpdateError } = await supabase.from("users").update({ xp: newXp, level: newLevel }).eq("id", player.id);
       if (userUpdateError) throw userUpdateError;
-
-      // Atualiza o estado do player localmente para refletir na interface
       setPlayer((prev) => (prev ? { ...prev, xp: newXp, level: newLevel } : null));
-
     } catch (err) {
       console.error("Erro ao computar recompensa:", err);
     } finally {
@@ -172,6 +167,7 @@ export default function Dashboard() {
 
   return (
     <main className="min-h-screen w-full bg-[#05060a] text-zinc-100 font-sans antialiased selection:bg-sky-500/40">
+      {/* Efeitos de Fundo de Neon Shadow */}
       <div className="pointer-events-none fixed inset-0 overflow-hidden">
         <div className="absolute -top-32 left-1/2 h-72 w-72 -translate-x-1/2 rounded-full bg-sky-500/10 blur-3xl md:h-96 md:w-96" />
         <div className="absolute bottom-0 right-0 h-72 w-72 rounded-full bg-indigo-500/10 blur-3xl md:h-96 md:w-96" />
@@ -179,41 +175,14 @@ export default function Dashboard() {
 
       <div className="relative mx-auto flex min-h-screen w-full max-w-md flex-col gap-5 px-4 py-6 sm:px-6 sm:py-8 md:max-w-xl md:gap-6 md:px-8 md:py-10 lg:max-w-2xl lg:px-10 lg:py-12">
         
-        <header className="rounded-xl border border-sky-500/20 bg-zinc-950/70 p-4 shadow-[0_0_30px_-15px_rgba(56,189,248,0.6)] backdrop-blur md:p-5 lg:p-6">
-          <div className="flex items-center justify-between gap-3 md:gap-4">
-            <div className="min-w-0">
-              <p className="text-[10px] font-medium uppercase tracking-[0.25em] text-sky-400/80">
-                Player:
-              </p>
-              <h1 className="truncate text-base font-bold uppercase tracking-wider text-zinc-50 sm:text-lg md:text-xl">
-                {player?.name || "UNKNOWN MONARCH"}
-              </h1>
-            </div>
-            <span className="shrink-0 rounded-md border border-sky-400/60 bg-sky-500/5 px-2.5 py-1 text-[10px] font-bold uppercase tracking-widest text-sky-300 shadow-[0_0_15px_-5px_rgba(56,189,248,0.8)] md:text-xs md:px-3">
-              LVL {String(player?.level || 1).padStart(2, "0")}
-            </span>
-          </div>
+        {/* 1. Componente de Perfil */}
+        <ProfileHeader player={player} xpPct={xpPct} />
 
-          <div className="mt-3 md:mt-4">
-            <div className="h-2 w-full overflow-hidden rounded-full bg-zinc-800/80 ring-1 ring-inset ring-zinc-700/50">
-              <div
-                className="h-full rounded-full bg-gradient-to-r from-sky-500 to-cyan-300 shadow-[0_0_10px_rgba(56,189,248,0.9)] transition-all duration-700 ease-out"
-                style={{ width: `${xpPct}%` }}
-              />
-            </div>
-            <p className="mt-1.5 text-right text-[10px] font-mono uppercase tracking-widest text-zinc-500">
-              XP: {player?.xp || 0} / 100
-            </p>
-          </div>
-        </header>
-
+        {/* Painel Central de Quests */}
         <section className="flex-1 rounded-xl border border-zinc-800 bg-zinc-900/80 p-4 backdrop-blur md:p-5 lg:p-6">
-          
           <div className="mb-4 border-b border-zinc-800 pb-2.5 flex items-center justify-between">
             <div>
-              <p className="text-[10px] font-medium uppercase tracking-[0.3em] text-sky-400/80">
-                Daily Quest
-              </p>
+              <p className="text-[10px] font-medium uppercase tracking-[0.3em] text-sky-400/80">Daily Quest</p>
               <h2 className="mt-1 text-sm font-bold uppercase tracking-wide text-zinc-100 sm:text-base md:text-lg">
                 Prepare to Get Stronger
               </h2>
@@ -231,26 +200,14 @@ export default function Dashboard() {
             </button>
           </div>
 
-          {isAddingTask && (
-            <form onSubmit={handleCreateTask} className="mb-4 animate-in fade-in slide-in-from-top-2 duration-200 flex gap-2">
-              <input
-                type="text"
-                value={newTaskTitle}
-                onChange={(e) => setNewTaskTitle(e.target.value)}
-                placeholder="Digitar nova quest diária..."
-                required
-                disabled={isSubmittingTask}
-                className="flex-1 rounded-lg border border-zinc-800 bg-zinc-950/60 px-3 py-2 text-xs text-zinc-100 placeholder:text-zinc-600 outline-none focus:border-sky-500/60 transition-all"
-              />
-              <button
-                type="submit"
-                disabled={isSubmittingTask}
-                className="rounded-lg border border-sky-500/40 bg-sky-500/10 px-3 py-2 font-mono text-[10px] font-bold uppercase tracking-wider text-sky-400 hover:bg-sky-500/20 disabled:opacity-50"
-              >
-                {isSubmittingTask ? "..." : "Fixar"}
-              </button>
-            </form>
-          )}
+          {/* 2. Componente de Formulário */}
+          <QuestForm
+            isAddingTask={isAddingTask}
+            newTaskTitle={newTaskTitle}
+            isSubmittingTask={isSubmittingTask}
+            setNewTaskTitle={setNewTaskTitle}
+            onSubmit={handleCreateTask}
+          />
 
           {tasks.length === 0 ? (
             <p className="text-center py-6 font-mono text-xs text-zinc-600 uppercase tracking-wider">
@@ -258,53 +215,17 @@ export default function Dashboard() {
             </p>
           ) : (
             <ul className="flex flex-col gap-2.5 md:gap-3">
-              {tasks.map((task) => {
-                const checked = task.is_completed;
-                return (
-                  <li key={task.id}>
-                    <div
-                      onClick={() => toggleTask(task.id, checked)}
-                      className={`group flex cursor-pointer items-start gap-3 rounded-lg border px-3 py-3 transition-all md:px-4 md:py-3.5 ${
-                        checked
-                          ? "border-sky-500/30 bg-sky-500/5"
-                          : "border-zinc-800 bg-zinc-950/40 hover:border-zinc-700"
-                      }`}
-                    >
-                      <span
-                        className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded border transition-all ${
-                          checked
-                            ? "border-sky-400 bg-sky-500/20 shadow-[0_0_10px_rgba(56,189,248,0.7)]"
-                            : "border-zinc-600 group-hover:border-sky-500/60"
-                        }`}
-                      >
-                        {checked && (
-                          <svg
-                            viewBox="0 0 16 16"
-                            className="h-3.5 w-3.5 text-sky-300"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="3"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                          >
-                            <path d="M3 8.5l3.5 3.5L13 5" />
-                          </svg>
-                        )}
-                      </span>
-                      
-                      <span
-                        className={`text-sm leading-snug transition-all select-none ${
-                          checked
-                            ? "text-zinc-500 line-through opacity-60"
-                            : "text-zinc-200"
-                        }`}
-                      >
-                        {task.title}
-                      </span>
-                    </div>
-                  </li>
-                );
-              })}
+              {tasks.map((task) => (
+                /* 3. Componente de Item da Lista */
+                <QuestItem
+                  key={task.id}
+                  task={task}
+                  claimed={claimed}
+                  onToggle={toggleTask}
+                  onDelete={deleteTask}
+                  onUpdateText={updateTaskText}
+                />
+              ))}
             </ul>
           )}
 
@@ -313,6 +234,7 @@ export default function Dashboard() {
           </p>
         </section>
 
+        {/* Botão de Resgatar Recompensa */}
         <button
           type="button"
           onClick={claimReward}
