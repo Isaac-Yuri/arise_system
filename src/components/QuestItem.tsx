@@ -34,25 +34,27 @@ export function QuestItem({ task, claimed, onToggle, onDelete, onUpdateText }: Q
 
   return (
     <li className="group relative flex items-center gap-3 rounded-lg border border-zinc-800 bg-zinc-950/40 px-3 py-2.5 transition-all hover:border-zinc-700 md:px-4">
-      {/* Clique no corpo da tarefa apenas alterna se NÃO estiver editando */}
-      <div 
-        onClick={() => !isEditing && onToggle(task.id, checked)}
-        className={`flex flex-1 cursor-pointer items-start gap-3 ${claimed ? "pointer-events-none" : ""}`}
+      
+      {/* 1. O clique de Concluir fica EXCLUSIVO no quadradinho do Checkbox */}
+      <button
+        type="button"
+        disabled={claimed || isEditing}
+        onClick={() => onToggle(task.id, checked)}
+        className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded border transition-all disabled:opacity-50 ${
+          checked
+            ? "border-sky-400 bg-sky-500/20 shadow-[0_0_10px_rgba(56,189,248,0.7)]"
+            : "border-zinc-600 hover:border-sky-500/60"
+        }`}
       >
-        <span
-          className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded border transition-all ${
-            checked
-              ? "border-sky-400 bg-sky-500/20 shadow-[0_0_10px_rgba(56,189,248,0.7)]"
-              : "border-zinc-600 group-hover:border-sky-500/60"
-          }`}
-        >
-          {checked && (
-            <svg viewBox="0 0 16 16" className="h-3.5 w-3.5 text-sky-300" fill="none" stroke="currentColor" strokeWidth="3">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M3 8.5l3.5 3.5L13 5" />
-            </svg>
-          )}
-        </span>
+        {checked && (
+          <svg viewBox="0 0 16 16" className="h-3.5 w-3.5 text-sky-300" fill="none" stroke="currentColor" strokeWidth="3">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M3 8.5l3.5 3.5L13 5" />
+          </svg>
+        )}
+      </button>
 
+      {/* 2. O texto da tarefa (e input de edição) */}
+      <div className="flex-1 min-w-0">
         {isEditing ? (
           <input
             type="text"
@@ -60,23 +62,23 @@ export function QuestItem({ task, claimed, onToggle, onDelete, onUpdateText }: Q
             onChange={(e) => setEditText(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && handleSave()}
             disabled={isSaving}
-            className="flex-1 rounded border border-zinc-700 bg-zinc-900 px-2 py-0.5 text-sm text-zinc-100 outline-none focus:border-sky-500"
+            className="w-full rounded border border-zinc-700 bg-zinc-900 px-2 py-0.5 text-sm text-zinc-100 outline-none focus:border-sky-500"
             autoFocus
           />
         ) : (
-          <span className={`text-sm leading-snug transition-all select-none ${checked ? "text-zinc-500 line-through opacity-60" : "text-zinc-200"}`}>
+          <span className={`block truncate text-sm leading-snug transition-all select-none ${checked ? "text-zinc-500 line-through opacity-60" : "text-zinc-200"}`}>
             {task.title}
           </span>
         )}
       </div>
 
-      {/* Painel de Ações (Editar / Deletar) */}
-      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+      {/* 3. Painel de Ações: Sempre visível no Mobile, efeito Hover apenas no Desktop */}
+      <div className="flex items-center gap-1 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity duration-200 shrink-0">
         {isEditing ? (
           <button
             onClick={handleSave}
             disabled={isSaving}
-            className="p-1 text-emerald-400 hover:text-emerald-300"
+            className="p-1.5 text-emerald-400 hover:text-emerald-300 active:scale-90"
             title="Salvar alteração"
           >
             <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
@@ -86,7 +88,7 @@ export function QuestItem({ task, claimed, onToggle, onDelete, onUpdateText }: Q
         ) : (
           <button
             onClick={() => setIsEditing(true)}
-            className="p-1 text-zinc-500 hover:text-sky-400 transition-colors"
+            className="p-1.5 text-zinc-500 hover:text-sky-400 active:scale-90 transition-colors"
             title="Editar quest"
           >
             <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
@@ -97,7 +99,7 @@ export function QuestItem({ task, claimed, onToggle, onDelete, onUpdateText }: Q
 
         <button
           onClick={() => onDelete(task.id)}
-          className="p-1 text-zinc-500 hover:text-red-400 transition-colors"
+          className="p-1.5 text-zinc-500 hover:text-red-400 active:scale-90 transition-colors"
           title="Abandonar quest"
         >
           <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
