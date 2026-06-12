@@ -8,13 +8,12 @@ interface DailyTask {
 
 interface QuestItemProps {
   task: DailyTask;
-  claimed: boolean;
   onToggle: (id: string, currentStatus: boolean) => void;
   onDelete: (id: string) => void;
   onUpdateText: (id: string, newTitle: string) => Promise<void>;
 }
 
-export function QuestItem({ task, claimed, onToggle, onDelete, onUpdateText }: QuestItemProps) {
+export function QuestItem({ task, onToggle, onDelete, onUpdateText }: QuestItemProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editText, setEditText] = useState(task.title);
   const [isSaving, setIsSaving] = useState(false);
@@ -38,7 +37,6 @@ export function QuestItem({ task, claimed, onToggle, onDelete, onUpdateText }: Q
       {/* 1. O clique de Concluir fica EXCLUSIVO no quadradinho do Checkbox */}
       <button
         type="button"
-        disabled={claimed || isEditing}
         onClick={() => onToggle(task.id, checked)}
         className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded border transition-all disabled:opacity-50 ${
           checked

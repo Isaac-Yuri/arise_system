@@ -20,11 +20,12 @@ interface DailyTask {
   is_completed: boolean;
 }
 
+const XP_PER_TASK = 25;
+
 export default function Dashboard() {
   const [player, setPlayer] = useState<UserData | null>(null);
   const [tasks, setTasks] = useState<DailyTask[]>([]);
   const [loading, setLoading] = useState(true);
-  const [claimed, setClaimed] = useState(false);
 
   const [isAddingTask, setIsAddingTask] = useState(false);
   const [newTaskTitle, setNewTaskTitle] = useState("");
@@ -67,18 +68,56 @@ export default function Dashboard() {
     loadDashboardData();
   }, []);
 
-  const allDone = tasks.length > 0 && tasks.every((t) => t.is_completed);
   const completedCount = useMemo(() => tasks.filter((t) => t.is_completed).length, [tasks]);
   const xpPct = player ? Math.min(100, (player.xp / 100) * 100) : 0;
 
   const toggleTask = async (taskId: string, currentStatus: boolean) => {
-    if (claimed) return;
-    setTasks((prev) => prev.map((t) => (t.id === taskId ? { ...t, is_completed: !currentStatus } : t)));
-    
-    const { error } = await supabase.from("daily_tasks").update({ is_completed: !currentStatus }).eq("id", taskId);
-    if (error) {
-      console.error("Erro ao atualizar status:", error);
-      setTasks((prev) => prev.map((t) => (t.id === taskId ? { ...t, is_completed: currentStatus } : t)));
+    const wasCompleted = currentStatus;
+    const xpDelta = wasCompleted ? -XP_PER_TASK : XP_PER_TASK;
+
+    // Optimistic update na UI
+    setTasks((prev) =>
+      prev.map((t) => (t.id === taskId ? { ...t, is_completed: !wasCompleted } : t))
+    );
+
+    try {
+      // 1. Atualiza o status da tarefa
+      const { error: taskError } = await supabase
+        .from("daily_tasks")
+        .update({ is_completed: !wasCompleted })
+        .eq("id", taskId);
+
+      if (taskError) throw taskError;
+
+      // 2. Calcula novo XP e level
+      if (!player) return;
+
+      const rawXp = player.xp + xpDelta;
+      let newXp = Math.max(0, rawXp); // nunca negativo
+      let newLevel = player.level;
+
+      if (newXp >= 100) {
+        newLevel += 1;
+        newXp = newXp - 100;
+      }
+
+      // 3. Salva no banco
+      const { error: userError } = await supabase
+        .from("users")
+        .update({ xp: newXp, level: newLevel })
+        .eq("id", player.id);
+
+      if (userError) throw userError;
+
+      // 4. Atualiza estado local
+      setPlayer((prev) => (prev ? { ...prev, xp: newXp, level: newLevel } : null));
+
+    } catch (err) {
+      console.error("Erro ao atualizar missão:", err);
+      // Reverte o optimistic update em caso de erro
+      setTasks((prev) =>
+        prev.map((t) => (t.id === taskId ? { ...t, is_completed: wasCompleted } : t))
+      );
     }
   };
 
@@ -126,29 +165,6 @@ export default function Dashboard() {
       console.error("Erro ao criar nova quest:", err);
     } finally {
       setIsSubmittingTask(false);
-    }
-  };
-
-  const claimReward = async () => {
-    if (!allDone || claimed || !player) return;
-
-    setClaimed(true);
-    let newXp = player.xp + 25;
-    let newLevel = player.level;
-
-    if (newXp >= 100) {
-      newLevel += 1;
-      newXp = newXp - 100;
-    }
-
-    try {
-      const { error: userUpdateError } = await supabase.from("users").update({ xp: newXp, level: newLevel }).eq("id", player.id);
-      if (userUpdateError) throw userUpdateError;
-      setPlayer((prev) => (prev ? { ...prev, xp: newXp, level: newLevel } : null));
-    } catch (err) {
-      console.error("Erro ao computar recompensa:", err);
-    } finally {
-      setClaimed(false);
     }
   };
 
@@ -215,7 +231,6 @@ export default function Dashboard() {
                 <QuestItem
                   key={task.id}
                   task={task}
-                  claimed={claimed}
                   onToggle={toggleTask}
                   onDelete={deleteTask}
                   onUpdateText={updateTaskText}
@@ -228,20 +243,6 @@ export default function Dashboard() {
             {completedCount} / {tasks.length} objetivos completos
           </p>
         </section>
-
-        {/* Botão de Resgatar Recompensa */}
-        <button
-          type="button"
-          onClick={claimReward}
-          disabled={!allDone || claimed}
-          className={`w-full rounded-xl border px-4 py-3.5 font-mono text-xs font-bold uppercase tracking-[0.2em] transition-all duration-300 sm:text-sm md:py-4 md:text-base ${
-            allDone && !claimed
-              ? "border-sky-400 bg-gradient-to-b from-sky-500/20 to-sky-500/5 text-sky-200 shadow-[0_0_25px_-5px_rgba(56,189,248,0.9)] hover:from-sky-500/30 hover:to-sky-500/10 hover:shadow-[0_0_35px_-2px_rgba(56,189,248,1)] active:scale-[0.98]"
-              : "cursor-not-allowed border-zinc-800 bg-zinc-900/50 text-zinc-600"
-          }`}
-        >
-          {claimed ? "[ REWARD CLAIMED ]" : "[ CLAIM REWARD (+25 XP) ]"}
-        </button>
 
         <p className="text-center font-mono text-[10px] uppercase tracking-[0.3em] text-zinc-700">
           Sistema Arise · v0.1
