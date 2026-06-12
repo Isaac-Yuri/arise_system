@@ -9,9 +9,10 @@ interface UserData {
 interface ProfileHeaderProps {
   player: UserData | null;
   xpPct: number;
+  xpMax: number;
 }
 
-export function ProfileHeader({ player, xpPct }: ProfileHeaderProps) {
+export function ProfileHeader({ player, xpPct, xpMax }: ProfileHeaderProps) {
   const handleLogout = async () => {
     await supabase.auth.signOut();
   };
@@ -54,7 +55,7 @@ export function ProfileHeader({ player, xpPct }: ProfileHeaderProps) {
           />
         </div>
         <p className="mt-1.5 text-right text-[10px] font-mono uppercase tracking-widest text-zinc-500">
-          XP: {player?.xp || 0} / 100
+          XP: {player?.xp || 0} / {xpMax}
         </p>
       </div>
     </header>

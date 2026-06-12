@@ -5,6 +5,8 @@ import {supabase} from "../lib/supabase";
 import { ProfileHeader } from "../components/ProfileHeader";
 import { QuestForm } from "../components/QuestForm";
 import { QuestItem } from "../components/QuestItem";
+import { notify } from "../lib/toast";
+import { GAME_CONFIG } from "../config/gameconfig";
 
 interface UserData {
   id: string;
@@ -19,8 +21,6 @@ interface DailyTask {
   title: string;
   is_completed: boolean;
 }
-
-const XP_PER_TASK = 25;
 
 export default function Dashboard() {
   const [player, setPlayer] = useState<UserData | null>(null);
@@ -60,6 +60,7 @@ export default function Dashboard() {
         }
         setTasks(tasksData || []);
       } catch (err) {
+        notify.error("Erro ao carregar dados do sistema Arise");
         console.error("Erro ao carregar dados do sistema Arise:", err);
       } finally {
         setLoading(false);
@@ -69,11 +70,11 @@ export default function Dashboard() {
   }, []);
 
   const completedCount = useMemo(() => tasks.filter((t) => t.is_completed).length, [tasks]);
-  const xpPct = player ? Math.min(100, (player.xp / 100) * 100) : 0;
+  const xpPct = player ? Math.min(100, (player.xp / GAME_CONFIG.xp.perLevel) * 100) : 0;
 
   const toggleTask = async (taskId: string, currentStatus: boolean) => {
     const wasCompleted = currentStatus;
-    const xpDelta = wasCompleted ? -XP_PER_TASK : XP_PER_TASK;
+    const xpDelta = wasCompleted ? -GAME_CONFIG.xp.perTask : GAME_CONFIG.xp.perTask;
 
     // Optimistic update na UI
     setTasks((prev) =>
@@ -96,9 +97,10 @@ export default function Dashboard() {
       let newXp = Math.max(0, rawXp); // nunca negativo
       let newLevel = player.level;
 
-      if (newXp >= 100) {
+      if (newXp >= GAME_CONFIG.xp.perLevel) {
         newLevel += 1;
-        newXp = newXp - 100;
+        notify.levelUp(newLevel);
+        newXp = newXp - GAME_CONFIG.xp.perLevel;
       }
 
       // 3. Salva no banco
@@ -113,7 +115,7 @@ export default function Dashboard() {
       setPlayer((prev) => (prev ? { ...prev, xp: newXp, level: newLevel } : null));
 
     } catch (err) {
-      console.error("Erro ao atualizar missão:", err);
+      notify.error("Não foi possível atualizar a missão");
       // Reverte o optimistic update em caso de erro
       setTasks((prev) =>
         prev.map((t) => (t.id === taskId ? { ...t, is_completed: wasCompleted } : t))
@@ -128,6 +130,7 @@ export default function Dashboard() {
     const { error } = await supabase.from("daily_tasks").update({ title: newTitle }).eq("id", taskId);
     if (error) {
       console.error("Erro ao editar quest:", error);
+      notify.error("Não foi possível editar a missão");
       setTasks(originalTasks);
     }
   };
@@ -187,7 +190,7 @@ export default function Dashboard() {
       <div className="relative mx-auto flex min-h-screen w-full max-w-md flex-col gap-5 px-4 py-6 sm:px-6 sm:py-8 md:max-w-xl md:gap-6 md:px-8 md:py-10 lg:max-w-2xl lg:px-10 lg:py-12">
         
         {/* 1. Componente de Perfil */}
-        <ProfileHeader player={player} xpPct={xpPct} />
+        <ProfileHeader player={player} xpPct={xpPct} xpMax={GAME_CONFIG.xp.perLevel} />
 
         {/* Painel Central de Quests */}
         <section className="flex-1 rounded-xl border border-zinc-800 bg-zinc-900/80 p-4 backdrop-blur md:p-5 lg:p-6">
