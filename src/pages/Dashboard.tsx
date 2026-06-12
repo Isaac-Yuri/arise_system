@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
-import { createClient } from "@supabase/supabase-js";
+import {supabase} from "../lib/supabase";
 
 // importações dos subcomponentes
 import { ProfileHeader } from "../components/ProfileHeader";
@@ -19,11 +19,6 @@ interface DailyTask {
   title: string;
   is_completed: boolean;
 }
-
-const supabase = createClient(
-  import.meta.env.VITE_SUPABASE_URL,
-  import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY
-);
 
 export default function Dashboard() {
   const [player, setPlayer] = useState<UserData | null>(null);

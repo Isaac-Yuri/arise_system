@@ -1,12 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router";
-import { createClient } from "@supabase/supabase-js";
+import { supabase } from "../lib/supabase";
 import GoogleLoginButton from "../components/GoogleLoginButton";
-
-const supabase = createClient(
-  import.meta.env.VITE_SUPABASE_URL,
-  import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY
-);
 
 export default function Cadastro() {
   const navigate = useNavigate();

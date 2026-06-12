@@ -4,11 +4,7 @@ import { createClient, type User } from "@supabase/supabase-js";
 import Dashboard from "./pages/Dashboard";
 import Login from "./pages/Login";
 import Cadastro from "./pages/Cadastro";
-
-const supabase = createClient(
-  import.meta.env.VITE_SUPABASE_URL,
-  import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY
-);
+import { supabase } from "./lib/supabase";
 
 export default function App() {
   const [user, setUser] = useState<User | null>(null);

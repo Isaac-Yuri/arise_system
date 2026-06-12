@@ -1,12 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router";
-import { createClient } from "@supabase/supabase-js";
+import { supabase } from "../lib/supabase";
 import GoogleLoginButton from "../components/GoogleLoginButton";
-
-const supabase = createClient(
-  import.meta.env.VITE_SUPABASE_URL,
-  import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY
-);
 
 export default function Login() {
   const navigate = useNavigate();
@@ -21,7 +16,6 @@ export default function Login() {
     setErrorMsg("");
 
     try {
-      // Autenticação Real com Supabase Auth
       const { error } = await supabase.auth.signInWithPassword({
         email,
         password,
@@ -34,23 +28,6 @@ export default function Login() {
       console.error("Erro na autenticação:", err);
       setErrorMsg(err.message || "Falha na autenticação do Hunter.");
     } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleGoogleLogin = async () => {
-    try {
-      setIsLoading(true);
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: "google",
-        options: {
-          redirectTo: window.location.origin,
-        },
-      });
-      if (error) throw error;
-    } catch (err: any) {
-      console.error("Erro ao autenticar com o Google:", err);
-      setErrorMsg(err.message || "Erro ao conectar com o Google.");
       setIsLoading(false);
     }
   };
