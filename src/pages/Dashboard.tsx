@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
-import {supabase} from "../lib/supabase";
+import { supabase } from "../lib/supabase";
 
 import { ProfileHeader } from "../components/ProfileHeader";
 import { QuestForm } from "../components/QuestForm";
@@ -72,13 +72,13 @@ export default function Dashboard() {
 
   const toggleTask = async (taskId: string, currentStatus: boolean) => {
     const wasCompleted = currentStatus;
-    
+
     const targetTask = tasks.find((t) => t.id === taskId);
     if (!targetTask) return;
 
     const questRank = (targetTask as any).difficulty_rank as QuestRank || "E";
     const xpReward = GAME_CONFIG.xp.byRank[questRank] || 25;
-    
+
     const xpDelta = wasCompleted ? -xpReward : xpReward;
 
     setTasks((prev) =>
@@ -96,21 +96,25 @@ export default function Dashboard() {
       if (!player) return;
 
       const rawXp = player.xp + xpDelta;
-      let newXp = Math.max(0, rawXp); 
+      let newXp = Math.max(0, rawXp);
       let newLevel = player.level;
       let newRank = player.rank;
 
-      // Lógica quântica de Level Up
-      if (newXp >= GAME_CONFIG.xp.perLevel) {
-        newLevel += 1;
-        notify.levelUp(newLevel);
-        newXp = newXp - GAME_CONFIG.xp.perLevel;
+      let leveledUp = false;
 
-        // NOVA LÓGICA: Calcula se o caçador atingiu uma nova faixa de Rank baseado no novo nível
+      while (newXp >= GAME_CONFIG.xp.perLevel) {
+        newLevel += 1;
+        newXp = newXp - GAME_CONFIG.xp.perLevel;
+        leveledUp = true;
+      }
+
+      // Se subiu de nível (seja um ou mais), dispara a notificação e recalcula o Rank
+      if (leveledUp) {
+        notify.levelUp(newLevel);
+
         const calculatedRank = GAME_CONFIG.playerRankByLevel(newLevel);
         if (calculatedRank !== newRank) {
           newRank = calculatedRank;
-          // Opcional: Você pode adicionar um toast especial aqui no futuro para alertar a mudança de Rank!
         }
       }
 
@@ -126,7 +130,7 @@ export default function Dashboard() {
     } catch (err) {
       console.error("Erro ao processar recompensa da quest:", err);
       notify.error("Não foi possível atualizar a missão");
-      
+
       setTasks((prev) =>
         prev.map((t) => (t.id === taskId ? { ...t, is_completed: wasCompleted } : t))
       );
@@ -156,7 +160,7 @@ export default function Dashboard() {
     }
   };
 
-  
+
   const handleCreateTask = async (title: string, rank: QuestRank) => {
     if (!title.trim() || !player || isSubmittingTask) return;
 
@@ -165,9 +169,9 @@ export default function Dashboard() {
       const { data, error } = await supabase
         .from("daily_tasks")
         .insert([
-          { 
-            user_id: player.id, 
-            title: title.trim(), 
+          {
+            user_id: player.id,
+            title: title.trim(),
             is_completed: false,
             difficulty_rank: rank // Injeta o rank selecionado no banco
           }
@@ -178,7 +182,7 @@ export default function Dashboard() {
       if (error) throw error;
       if (data) {
         setTasks((prev) => [...prev, data]);
-        setIsAddingTask(false); 
+        setIsAddingTask(false);
       }
     } catch (err) {
       console.error("Erro ao criar nova quest:", err);
@@ -205,7 +209,7 @@ export default function Dashboard() {
       </div>
 
       <div className="relative mx-auto flex min-h-screen w-full max-w-md flex-col gap-5 px-4 py-6 sm:px-6 sm:py-8 md:max-w-xl md:gap-6 md:px-8 md:py-10 lg:max-w-2xl lg:px-10 lg:py-12">
-        
+
         {/* 1. Componente de Perfil */}
         <ProfileHeader player={player} xpPct={xpPct} xpMax={GAME_CONFIG.xp.perLevel} />
 
@@ -218,7 +222,7 @@ export default function Dashboard() {
                 Prepare to Get Stronger
               </h2>
             </div>
-            
+
             <button
               type="button"
               onClick={() => setIsAddingTask(!isAddingTask)}
