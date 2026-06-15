@@ -12,6 +12,7 @@ interface UserData {
   name: string;
   level: number;
   xp: number;
+  rank: QuestRank;
 }
 
 interface DailyTask {
@@ -51,7 +52,7 @@ export default function Dashboard() {
         if (tasksError) throw tasksError;
 
         if (!userDataArray || userDataArray.length === 0) {
-          setPlayer({ id: user.id, name: "MONARCA ADORMECIDO", level: 1, xp: 0 });
+          setPlayer({ id: user.id, name: "MONARCA ADORMECIDO", level: 1, xp: 0, rank: "E" });
         } else {
           setPlayer(userDataArray[0]);
         }
@@ -97,22 +98,30 @@ export default function Dashboard() {
       const rawXp = player.xp + xpDelta;
       let newXp = Math.max(0, rawXp); 
       let newLevel = player.level;
+      let newRank = player.rank;
 
       // Lógica quântica de Level Up
       if (newXp >= GAME_CONFIG.xp.perLevel) {
         newLevel += 1;
         notify.levelUp(newLevel);
         newXp = newXp - GAME_CONFIG.xp.perLevel;
+
+        // NOVA LÓGICA: Calcula se o caçador atingiu uma nova faixa de Rank baseado no novo nível
+        const calculatedRank = GAME_CONFIG.playerRankByLevel(newLevel);
+        if (calculatedRank !== newRank) {
+          newRank = calculatedRank;
+          // Opcional: Você pode adicionar um toast especial aqui no futuro para alertar a mudança de Rank!
+        }
       }
 
       const { error: userError } = await supabase
         .from("users")
-        .update({ xp: newXp, level: newLevel })
+        .update({ xp: newXp, level: newLevel, rank: newRank })
         .eq("id", player.id);
 
       if (userError) throw userError;
 
-      setPlayer((prev) => (prev ? { ...prev, xp: newXp, level: newLevel } : null));
+      setPlayer((prev) => (prev ? { ...prev, xp: newXp, level: newLevel, rank: newRank } : null));
 
     } catch (err) {
       console.error("Erro ao processar recompensa da quest:", err);
