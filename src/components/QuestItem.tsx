@@ -1,9 +1,11 @@
 import { useState } from "react";
+import { type QuestRank, GAME_CONFIG } from "../config/gameConfig";
 
 interface DailyTask {
   id: string;
   title: string;
   is_completed: boolean;
+  difficulty_rank?: QuestRank; // Adicionado para suportar os novos Ranks do sistema
 }
 
 interface QuestItemProps {
@@ -18,6 +20,58 @@ export function QuestItem({ task, onToggle, onDelete, onUpdateText }: QuestItemP
   const [editText, setEditText] = useState(task.title);
   const [isSaving, setIsSaving] = useState(false);
 
+  const checked = task.is_completed;
+  const rank: QuestRank = task.difficulty_rank || "E"; // Fallback caso seja uma tarefa antiga sem rank
+  const xpReward = GAME_CONFIG.xp.byRank[rank];
+
+  // Configuração de estilos visuais dinâmicos baseados no Rank da Missão
+  const rankStyles: Record<QuestRank, { border: string; text: string; bg: string; shadow: string; badge: string }> = {
+    E: {
+      border: "border-zinc-800 hover:border-zinc-700",
+      text: "text-zinc-200",
+      bg: "bg-zinc-950/40",
+      shadow: "",
+      badge: "border-zinc-700 bg-zinc-900/50 text-zinc-400",
+    },
+    D: {
+      border: "border-emerald-950 hover:border-emerald-800/60",
+      text: "text-emerald-100",
+      bg: "bg-emerald-950/10",
+      shadow: "shadow-[0_0_15px_-5px_rgba(52,211,153,0.1)]",
+      badge: "border-emerald-500/30 bg-emerald-500/10 text-emerald-400",
+    },
+    C: {
+      border: "border-sky-950 hover:border-sky-800/60",
+      text: "text-sky-100",
+      bg: "bg-sky-950/10",
+      shadow: "shadow-[0_0_15px_-5px_rgba(56,189,248,0.15)]",
+      badge: "border-sky-500/30 bg-sky-500/10 text-sky-400",
+    },
+    B: {
+      border: "border-purple-950 hover:border-purple-800/60",
+      text: "text-purple-100",
+      bg: "bg-purple-950/10",
+      shadow: "shadow-[0_0_20px_-5px_rgba(192,132,252,0.2)]",
+      badge: "border-purple-500/30 bg-purple-500/10 text-purple-400",
+    },
+    A: {
+      border: "border-red-950/60 hover:border-red-800/60",
+      text: "text-red-100",
+      bg: "bg-red-950/10",
+      shadow: "shadow-[0_0_25px_-5px_rgba(248,113,113,0.25)]",
+      badge: "border-red-500/30 bg-red-500/10 text-red-400 font-medium",
+    },
+    S: {
+      border: "border-amber-500/40 hover:border-amber-400/60 animate-pulse",
+      text: "text-amber-100 font-semibold tracking-wide",
+      bg: "bg-amber-950/10",
+      shadow: "shadow-[0_0_30px_-5px_rgba(251,191,36,0.4)]",
+      badge: "border-amber-400/50 bg-gradient-to-r from-amber-500/20 to-yellow-500/10 text-amber-300 font-bold shadow-[0_0_10px_rgba(251,191,36,0.2)]",
+    },
+  };
+
+  const currentStyle = rankStyles[rank];
+
   const handleSave = async () => {
     if (!editText.trim() || editText.trim() === task.title) {
       setIsEditing(false);
@@ -29,18 +83,21 @@ export function QuestItem({ task, onToggle, onDelete, onUpdateText }: QuestItemP
     setIsEditing(false);
   };
 
-  const checked = task.is_completed;
-
   return (
-    <li className="group relative flex items-center gap-3 rounded-lg border border-zinc-800 bg-zinc-950/40 px-3 py-2.5 transition-all hover:border-zinc-700 md:px-4">
-      
-      {/* 1. O clique de Concluir fica EXCLUSIVO no quadradinho do Checkbox */}
+    <li
+      className={`group relative flex items-center gap-3 rounded-lg border px-3 py-3 transition-all md:px-4 ${
+        checked 
+          ? "border-zinc-900 bg-zinc-950/20 shadow-none opacity-50" 
+          : `${currentStyle.border} ${currentStyle.bg} ${currentStyle.shadow}`
+      }`}
+    >
+      {/* Checkbox */}
       <button
         type="button"
         onClick={() => onToggle(task.id, checked)}
         className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded border transition-all disabled:opacity-50 ${
           checked
-            ? "border-sky-400 bg-sky-500/20 shadow-[0_0_10px_rgba(56,189,248,0.7)]"
+            ? "border-sky-500 bg-sky-500/20 shadow-[0_0_10px_rgba(56,189,248,0.7)]"
             : "border-zinc-600 hover:border-sky-500/60"
         }`}
       >
@@ -51,7 +108,7 @@ export function QuestItem({ task, onToggle, onDelete, onUpdateText }: QuestItemP
         )}
       </button>
 
-      {/* 2. O texto da tarefa (e input de edição) */}
+      {/* Título e Badge de Recompensa */}
       <div className="flex-1 min-w-0">
         {isEditing ? (
           <input
@@ -64,13 +121,21 @@ export function QuestItem({ task, onToggle, onDelete, onUpdateText }: QuestItemP
             autoFocus
           />
         ) : (
-          <span className={`block truncate text-sm leading-snug transition-all select-none ${checked ? "text-zinc-500 line-through opacity-60" : "text-zinc-200"}`}>
-            {task.title}
-          </span>
+          <div className="flex flex-col gap-1">
+            <span className={`block truncate text-sm leading-snug transition-all select-none ${checked ? "text-zinc-500 line-through" : currentStyle.text}`}>
+              {task.title}
+            </span>
+            {/* O Badge com o Rank e a recompensa em XP */}
+            <div className="flex items-center">
+              <span className={`rounded px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-widest border ${checked ? "border-zinc-800 bg-zinc-950 text-zinc-600" : currentStyle.badge}`}>
+                Rank {rank} · +{xpReward} XP
+              </span>
+            </div>
+          </div>
         )}
       </div>
 
-      {/* 3. Painel de Ações: Sempre visível no Mobile, efeito Hover apenas no Desktop */}
+      {/* Painel de Ações */}
       <div className="flex items-center gap-1 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity duration-200 shrink-0">
         {isEditing ? (
           <button
