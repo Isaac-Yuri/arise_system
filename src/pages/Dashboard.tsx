@@ -1,12 +1,11 @@
 import { useState, useEffect, useMemo } from "react";
 import {supabase} from "../lib/supabase";
 
-// importações dos subcomponentes
 import { ProfileHeader } from "../components/ProfileHeader";
 import { QuestForm } from "../components/QuestForm";
 import { QuestItem } from "../components/QuestItem";
 import { notify } from "../lib/toast";
-import { GAME_CONFIG } from "../config/gameconfig";
+import { GAME_CONFIG } from "../config/gameConfig";
 
 interface UserData {
   id: string;
