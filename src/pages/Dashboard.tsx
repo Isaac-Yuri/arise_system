@@ -25,9 +25,7 @@ export default function Dashboard() {
   const [player, setPlayer] = useState<UserData | null>(null);
   const [tasks, setTasks] = useState<DailyTask[]>([]);
   const [loading, setLoading] = useState(true);
-
   const [isAddingTask, setIsAddingTask] = useState(false);
-  const [newTaskTitle, setNewTaskTitle] = useState("");
   const [isSubmittingTask, setIsSubmittingTask] = useState(false);
 
   useEffect(() => {

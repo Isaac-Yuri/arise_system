@@ -20,10 +20,10 @@ O sistema central já está operando com as seguintes fundações:
 Abaixo está o planejamento de desenvolvimento para os próximos passos do sistema. Sinta-se livre para acompanhar o progresso das implementações:
 
 - [ ] **PASSO 1: RANKS DE MISSÃO & XP DINÂMICO**
-  - [ ] Criar coluna de texto/enum (`difficulty_rank`) na tabela `daily_tasks` do Supabase (Ranks: E, D, C, B, A, S).
-  - [ ] Atualizar o arquivo `gameconfig.ts` com o mapeamento de XP por Rank (Rank E: +10 XP até Rank S: +300 XP).
-  - [ ] Modificar o `QuestForm.tsx` para incluir um campo de seleção de Rank ao criar a tarefa.
-  - [ ] Alterar a função `toggleTask` no `Dashboard.tsx` para somar/subtrair o valor de XP dinâmico correspondente ao Rank.
+  - [X] Criar coluna de texto/enum (`difficulty_rank`) na tabela `daily_tasks` do Supabase (Ranks: E, D, C, B, A, S).
+  - [X] Atualizar o arquivo `gameconfig.ts` com o mapeamento de XP por Rank (Rank E: +10 XP até Rank S: +300 XP).
+  - [X] Modificar o `QuestForm.tsx` para incluir um campo de seleção de Rank ao criar a tarefa.
+  - [X] Alterar a função `toggleTask` no `Dashboard.tsx` para somar/subtrair o valor de XP dinâmico correspondente ao Rank.
 
 - [ ] **PASSO 2: VISUAL DOS CARDS DE TAREFA & RECOMPENSAS**
   - [ ] Modificar o `QuestItem.tsx` para exibir um badge com o Rank e o XP da missão abaixo do título (Ex: `[RANK C] +40 XP`).
