@@ -1,9 +1,11 @@
+import { type QuestRank } from "../config/gameConfig";
 import { supabase } from "../lib/supabase";
 
 interface UserData {
   name: string;
   level: number;
   xp: number;
+  rank: QuestRank;
 }
 
 interface ProfileHeaderProps {
@@ -15,6 +17,18 @@ interface ProfileHeaderProps {
 export function ProfileHeader({ player, xpPct, xpMax }: ProfileHeaderProps) {
   const handleLogout = async () => {
     await supabase.auth.signOut();
+  };
+
+  const playerRank: QuestRank = player?.rank || "E";
+
+  // Cores dinâmicas para o texto do Rank do Hunter baseado na sua evolução
+  const rankTextColor: Record<QuestRank, string> = {
+    E: "text-zinc-400",
+    D: "text-emerald-400",
+    C: "text-sky-400",
+    B: "text-purple-400",
+    A: "text-red-400 shadow-[0_0_10px_rgba(239,68,68,0.3)]",
+    S: "text-amber-400 font-extrabold animate-pulse shadow-[0_0_15px_rgba(251,191,36,0.5)]",
   };
 
   return (
@@ -30,8 +44,11 @@ export function ProfileHeader({ player, xpPct, xpMax }: ProfileHeaderProps) {
         </div>
 
         <div className="flex shrink-0 items-center gap-2">
-          <span className="rounded-md border border-sky-400/60 bg-sky-500/5 px-2.5 py-1 text-[10px] font-bold uppercase tracking-widest text-sky-300 shadow-[0_0_15px_-5px_rgba(56,189,248,0.8)] md:text-xs md:px-3">
-            LVL {String(player?.level || 1).padStart(2, "0")}
+          {/* Badge de Nível e Rank atualizados com o novo formato de exibição */}
+          <span className="flex items-center gap-1.5 rounded-md border border-sky-400/60 bg-sky-500/5 px-2.5 py-1 text-[10px] font-bold uppercase tracking-widest text-sky-300 shadow-[0_0_15px_-5px_rgba(56,189,248,0.8)] md:text-xs md:px-3">
+            <span>LVL {String(player?.level || 1).padStart(2, "0")}</span>
+            <span className="text-zinc-600">·</span>
+            <span className={rankTextColor[playerRank]}>RANK {playerRank}</span>
           </span>
 
           <button
