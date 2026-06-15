@@ -73,15 +73,20 @@ export default function Dashboard() {
 
   const toggleTask = async (taskId: string, currentStatus: boolean) => {
     const wasCompleted = currentStatus;
-    const xpDelta = wasCompleted ? -GAME_CONFIG.xp.perTask : GAME_CONFIG.xp.perTask;
+    
+    const targetTask = tasks.find((t) => t.id === taskId);
+    if (!targetTask) return;
 
-    // Optimistic update na UI
+    const questRank = (targetTask as any).difficulty_rank as QuestRank || "E";
+    const xpReward = GAME_CONFIG.xp.byRank[questRank] || 25;
+    
+    const xpDelta = wasCompleted ? -xpReward : xpReward;
+
     setTasks((prev) =>
       prev.map((t) => (t.id === taskId ? { ...t, is_completed: !wasCompleted } : t))
     );
 
     try {
-      // 1. Atualiza o status da tarefa
       const { error: taskError } = await supabase
         .from("daily_tasks")
         .update({ is_completed: !wasCompleted })
@@ -89,20 +94,19 @@ export default function Dashboard() {
 
       if (taskError) throw taskError;
 
-      // 2. Calcula novo XP e level
       if (!player) return;
 
       const rawXp = player.xp + xpDelta;
-      let newXp = Math.max(0, rawXp); // nunca negativo
+      let newXp = Math.max(0, rawXp); 
       let newLevel = player.level;
 
+      // Lógica quântica de Level Up
       if (newXp >= GAME_CONFIG.xp.perLevel) {
         newLevel += 1;
         notify.levelUp(newLevel);
         newXp = newXp - GAME_CONFIG.xp.perLevel;
       }
 
-      // 3. Salva no banco
       const { error: userError } = await supabase
         .from("users")
         .update({ xp: newXp, level: newLevel })
@@ -110,12 +114,12 @@ export default function Dashboard() {
 
       if (userError) throw userError;
 
-      // 4. Atualiza estado local
       setPlayer((prev) => (prev ? { ...prev, xp: newXp, level: newLevel } : null));
 
     } catch (err) {
+      console.error("Erro ao processar recompensa da quest:", err);
       notify.error("Não foi possível atualizar a missão");
-      // Reverte o optimistic update em caso de erro
+      
       setTasks((prev) =>
         prev.map((t) => (t.id === taskId ? { ...t, is_completed: wasCompleted } : t))
       );
