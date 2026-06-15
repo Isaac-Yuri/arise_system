@@ -52,20 +52,20 @@ export default function App() {
     );
   }
 
-  <>
-    <Toaster
-      position="top-center"
-      toastOptions={{
-        classNames: {
-          toast: "!bg-zinc-900 !border !border-zinc-800 !text-zinc-100 !font-mono !text-xs !uppercase !tracking-widest !rounded-xl",
-          error: "!border-red-500/40 !shadow-[0_0_20px_-5px_rgba(239,68,68,0.5)]",
-          success: "!border-sky-500/40 !shadow-[0_0_20px_-5px_rgba(56,189,248,0.5)]",
-          description: "!text-zinc-500",
-        },
-      }}
-    />
-    <RouterProvider router={router} />
-  </>
-
-  return <RouterProvider router={router} />;
+  return (
+    <>
+      <Toaster
+        position="top-center"
+        toastOptions={{
+          classNames: {
+            toast: "!bg-zinc-900 !border !border-zinc-800 !text-zinc-100 !font-mono !text-xs !uppercase !tracking-widest !rounded-xl",
+            error: "!border-red-500/40 !shadow-[0_0_20px_-5px_rgba(239,68,68,0.5)]",
+            success: "!border-sky-500/40 !shadow-[0_0_20px_-5px_rgba(56,189,248,0.5)]",
+            description: "!text-zinc-500",
+          },
+        }}
+      />
+      <RouterProvider router={router} />
+    </>
+  );
 }
