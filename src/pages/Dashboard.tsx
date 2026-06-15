@@ -5,7 +5,7 @@ import { ProfileHeader } from "../components/ProfileHeader";
 import { QuestForm } from "../components/QuestForm";
 import { QuestItem } from "../components/QuestItem";
 import { notify } from "../lib/toast";
-import { GAME_CONFIG } from "../config/gameConfig";
+import { GAME_CONFIG, type QuestRank } from "../config/gameConfig";
 
 interface UserData {
   id: string;
@@ -145,26 +145,33 @@ export default function Dashboard() {
     }
   };
 
-  const handleCreateTask = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newTaskTitle.trim() || !player || isSubmittingTask) return;
+  
+  const handleCreateTask = async (title: string, rank: QuestRank) => {
+    if (!title.trim() || !player || isSubmittingTask) return;
 
     try {
       setIsSubmittingTask(true);
       const { data, error } = await supabase
         .from("daily_tasks")
-        .insert([{ user_id: player.id, title: newTaskTitle.trim(), is_completed: false }])
+        .insert([
+          { 
+            user_id: player.id, 
+            title: title.trim(), 
+            is_completed: false,
+            difficulty_rank: rank // Injeta o rank selecionado no banco
+          }
+        ])
         .select()
         .single();
 
       if (error) throw error;
       if (data) {
         setTasks((prev) => [...prev, data]);
-        setNewTaskTitle("");
-        setIsAddingTask(false);
+        setIsAddingTask(false); 
       }
     } catch (err) {
       console.error("Erro ao criar nova quest:", err);
+      notify.error("Não foi possível criar a missão");
     } finally {
       setIsSubmittingTask(false);
     }
@@ -215,11 +222,10 @@ export default function Dashboard() {
 
           {/* 2. Componente de Formulário */}
           <QuestForm
-            isAddingTask={isAddingTask}
-            newTaskTitle={newTaskTitle}
-            isSubmittingTask={isSubmittingTask}
-            setNewTaskTitle={setNewTaskTitle}
+            isOpen={isAddingTask}
+            onClose={() => setIsAddingTask(false)}
             onSubmit={handleCreateTask}
+            isSubmitting={isSubmittingTask}
           />
 
           {tasks.length === 0 ? (
