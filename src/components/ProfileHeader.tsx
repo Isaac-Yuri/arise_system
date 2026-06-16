@@ -12,9 +12,10 @@ interface ProfileHeaderProps {
   player: UserData | null;
   xpPct: number;
   xpMax: number;
+  xpBarClass: string;
 }
 
-export function ProfileHeader({ player, xpPct, xpMax }: ProfileHeaderProps) {
+export function ProfileHeader({ player, xpPct, xpMax, xpBarClass }: ProfileHeaderProps) {
   const handleLogout = async () => {
     await supabase.auth.signOut();
   };
@@ -63,11 +64,11 @@ export function ProfileHeader({ player, xpPct, xpMax }: ProfileHeaderProps) {
           </button>
         </div>
       </div>
-
+      {/* Barra de XP com animação suave e cores dinâmicas */}
       <div className="mt-3 md:mt-4">
         <div className="h-2 w-full overflow-hidden rounded-full bg-zinc-800/80 ring-1 ring-inset ring-zinc-700/50">
           <div
-            className="h-full rounded-full bg-gradient-to-r from-sky-500 to-cyan-300 shadow-[0_0_10px_rgba(56,189,248,0.9)] transition-all duration-700 ease-out"
+            className={`h-full rounded-full bg-gradient-to-r transition-all duration-700 ease-out ${xpBarClass}`}
             style={{ width: `${xpPct}%` }}
           />
         </div>
