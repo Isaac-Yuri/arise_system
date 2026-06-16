@@ -1,12 +1,6 @@
 import { type QuestRank } from "../config/gameConfig";
 import { supabase } from "../lib/supabase";
-
-interface UserData {
-  name: string;
-  level: number;
-  xp: number;
-  rank: QuestRank;
-}
+import { type UserData } from "../types";
 
 interface ProfileHeaderProps {
   player: UserData | null;

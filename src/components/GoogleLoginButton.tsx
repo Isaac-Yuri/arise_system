@@ -1,10 +1,5 @@
 import { useState } from "react";
-import { createClient } from "@supabase/supabase-js";
-
-const supabase = createClient(
-  import.meta.env.VITE_SUPABASE_URL,
-  import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY
-);
+import { supabase } from "../lib/supabase";
 
 interface GoogleLoginButtonProps {
   onError: (message: string) => void;
@@ -16,7 +11,7 @@ export default function GoogleLoginButton({ onError }: GoogleLoginButtonProps) {
   const handleGoogleLogin = async () => {
     try {
       setIsLoading(true);
-      onError(""); // Limpa erros anteriores no componente pai
+      onError("");
 
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
