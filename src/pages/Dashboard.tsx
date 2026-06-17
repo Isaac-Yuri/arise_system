@@ -4,6 +4,7 @@ import { supabase } from "../lib/supabase";
 import { ProfileHeader } from "../components/ProfileHeader";
 import { QuestForm } from "../components/QuestForm";
 import { QuestItem } from "../components/QuestItem";
+import { AwakeningOverlay } from "../components/AwakeningOverlay";
 import { notify } from "../lib/toast";
 import { GAME_CONFIG, type QuestRank } from "../config/gameConfig";
 import { HUNTER_THEME_STYLES } from "../config/themeConfig";
@@ -12,7 +13,7 @@ import { useQuests } from "../hooks/useQuests";
 
 export default function Dashboard() {
   const [isAddingTask, setIsAddingTask] = useState(false);
-  const { player, setPlayer, loadingPlayer, fetchPlayer } = usePlayer();
+  const { player, setPlayer, loadingPlayer, fetchPlayer, awakenPlayer } = usePlayer();
   const { tasks, loadingTasks, isSubmittingTask, fetchTasks, createTask, toggleTask, updateTaskText, deleteTask } = useQuests(player, setPlayer);
 
   const currentRank: QuestRank = player?.rank || "E";
@@ -47,6 +48,10 @@ export default function Dashboard() {
     );
   }
 
+  if (player && !player.has_awakened) {
+    return <AwakeningOverlay onConfirm={() => awakenPlayer(player.id)} />;
+  }
+
   return (
     <main className="min-h-screen w-full bg-[#05060a] text-zinc-100 font-sans antialiased selection:bg-sky-500/40">
       <div className="pointer-events-none fixed inset-0 overflow-hidden">
@@ -55,11 +60,11 @@ export default function Dashboard() {
       </div>
 
       <div className="relative mx-auto flex min-h-screen w-full max-w-md flex-col gap-5 px-4 py-6 sm:px-6 sm:py-8 md:max-w-xl md:gap-6 md:px-8 md:py-10 lg:max-w-2xl lg:px-10 lg:py-12">
-        
-        <ProfileHeader 
-          player={player} 
-          xpPct={xpPct} 
-          xpMax={GAME_CONFIG.xp.perLevel} 
+
+        <ProfileHeader
+          player={player}
+          xpPct={xpPct}
+          xpMax={GAME_CONFIG.xp.perLevel}
           xpBarClass={theme.xpBar}
         />
 
@@ -73,7 +78,7 @@ export default function Dashboard() {
                 Prepare to Get Stronger
               </h2>
             </div>
-            
+
             <button
               type="button"
               onClick={() => setIsAddingTask(true)}
