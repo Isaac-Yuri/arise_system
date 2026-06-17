@@ -38,10 +38,10 @@ Abaixo está o planejamento de desenvolvimento para os próximos passos do siste
   - [X] Mapear as auras blur de fundo do aplicativo com base no Rank do jogador carregado do banco.
   - [X] Tornar a atmosfera visual responsiva (o app inteiro muda de tom conforme o Hunter se torna mais poderoso).
 
-- [ ] **PASSO 5: O EVENTO DE "DESPERTAR" (ONBOARDING)**
-  - [ ] Criar a coluna booleana `has_awakened` na tabela `users` do Supabase.
-  - [ ] Desenvolver uma tela de introdução preta com efeito de digitação lenta (*typewriter*) simulando as caixas de alerta do Sistema de Solo Leveling avaliando a mana do jogador.
-  - [ ] Bloquear o painel até que o jogador clique em `[ ACEITAR DESPERTAR ]`, atualizando o banco de dados.
+- [X] **PASSO 5: O EVENTO DE "DESPERTAR" (ONBOARDING)**
+  - [X] Criar a coluna booleana `has_awakened` na tabela `users` do Supabase.
+  - [X] Desenvolver uma tela de introdução preta com efeito de digitação lenta (*typewriter*) simulando as caixas de alerta do Sistema de Solo Leveling avaliando a mana do jogador.
+  - [X] Bloquear o painel até que o jogador clique em `[ ACEITAR DESPERTAR ]`, atualizando o banco de dados.
 
 ---
 
