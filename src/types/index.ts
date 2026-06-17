@@ -8,6 +8,7 @@ export interface UserData {
   level: number;
   xp: number;
   rank: QuestRank;
+  has_awakened: boolean;
 }
 
 export interface DailyTask {

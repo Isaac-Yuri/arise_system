@@ -18,7 +18,7 @@ export function usePlayer() {
 
       if (!data || data.length === 0) {
         // Fallback de contingência caso a trigger demore a responder
-        setPlayer({ id: userId, name: "MONARCA ADORMECIDO", level: 1, xp: 0, rank: "E" });
+        setPlayer({ id: userId, name: "MONARCA ADORMECIDO", level: 1, xp: 0, rank: "E", has_awakened: false });
       } else {
         setPlayer(data[0]);
       }
@@ -30,5 +30,21 @@ export function usePlayer() {
     }
   };
 
-  return { player, setPlayer, loadingPlayer, fetchPlayer };
+  const awakenPlayer = async (userId: string) => {
+    try {
+      const { error } = await supabase
+        .from("users")
+        .update({ has_awakened: true })
+        .eq("id", userId);
+
+      if (error) throw error;
+
+      setPlayer((prev) => (prev ? { ...prev, has_awakened: true } : null));
+    } catch (err) {
+      console.error("Erro ao despertar caçador:", err);
+      throw err;
+    }
+  };
+
+  return { player, setPlayer, loadingPlayer, fetchPlayer, awakenPlayer };
 }
