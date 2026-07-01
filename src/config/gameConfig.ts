@@ -10,6 +10,20 @@ export const GAME_CONFIG = {
       S: 300,
     }
   },
+
+  // ==========================================
+  // NOVO: SISTEMA DE RECOMPENSA EM ARISE COINS
+  // ==========================================
+  coins: {
+    byRank: {
+      E: 1,   // Rank E (Iniciante)
+      D: 5,   // Rank D (Fácil)
+      C: 10,   // Rank C (Médio)
+      B: 25,  // Rank B (Difícil)
+      A: 50,  // Rank A (Perigoso)
+      S: 100, // Rank S (Monarca)
+    }
+  },
   
   level: {
     min: 1,

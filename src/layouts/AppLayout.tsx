@@ -1,4 +1,3 @@
-// src/layouts/AppLayout.tsx
 import { Link, Outlet, useLocation } from "react-router";
 import { supabase } from "../lib/supabase";
 
