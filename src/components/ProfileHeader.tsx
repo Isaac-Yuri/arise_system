@@ -39,7 +39,13 @@ export function ProfileHeader({ player, xpPct, xpMax, xpBarClass }: ProfileHeade
         </div>
 
         <div className="flex shrink-0 items-center gap-2">
-          {/* Badge de Nível e Rank atualizados com o novo formato de exibição */}
+          {/* Mostrador de Arise Coins (Visual Estilo RPG Neon) */}
+          <span className="flex items-center gap-1 rounded-md border border-amber-500/30 bg-amber-500/5 px-2 py-1 text-[10px] font-mono font-bold uppercase tracking-widest text-amber-400 shadow-[0_0_15px_-5px_rgba(245,158,11,0.5)] md:text-xs md:px-2.5">
+            <span>🪙</span>
+            <span>{player?.arise_coins ?? 0} AC</span>
+          </span>
+
+          {/* Badge de Nível e Rank */}
           <span className="flex items-center gap-1.5 rounded-md border border-sky-400/60 bg-sky-500/5 px-2.5 py-1 text-[10px] font-bold uppercase tracking-widest text-sky-300 shadow-[0_0_15px_-5px_rgba(56,189,248,0.8)] md:text-xs md:px-3">
             <span>LVL {String(player?.level || 1).padStart(2, "0")}</span>
             <span className="text-zinc-600">·</span>
@@ -58,6 +64,7 @@ export function ProfileHeader({ player, xpPct, xpMax, xpBarClass }: ProfileHeade
           </button>
         </div>
       </div>
+
       {/* Barra de XP com animação suave e cores dinâmicas */}
       <div className="mt-3 md:mt-4">
         <div className="h-2 w-full overflow-hidden rounded-full bg-zinc-800/80 ring-1 ring-inset ring-zinc-700/50">

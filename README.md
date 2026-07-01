@@ -20,15 +20,15 @@ O sistema central opera com as seguintes fundações de caça:
 
 Abaixo está o planejamento de desenvolvimento para a consolidação da interface e introdução da economia e inteligência artificial diretamente no ecossistema atual.
 
-- [ ] **PASSO 1: A MATRIZ DE NAVEGAÇÃO (MENU RESPONSIVO GLOBAL)**
-    - [ ] Criar um layout de navegação unificado utilizando React Router.
-    - [ ] Desenvolver um **Menu Responsivo**: Sidebar lateral fixa com efeito blur/neon para telas Desktop (`md:flex`) e uma Bottom Navigation Bar (barra inferior) compacta e anatômica para dispositivos Mobile (`md:hidden`).
-    - [ ] Configurar o roteamento para as três abas principais: Dashboard, Loja e Perfil.
+- [X] **PASSO 1: A MATRIZ DE NAVEGAÇÃO (MENU RESPONSIVO GLOBAL)**
+    - [X] Criar um layout de navegação unificado utilizando React Router.
+    - [X] Desenvolver um **Menu Responsivo**: Sidebar lateral fixa com efeito blur/neon para telas Desktop (`md:flex`) e uma Bottom Navigation Bar (barra inferior) compacta e anatômica para dispositivos Mobile (`md:hidden`).
+    - [X] Configurar o roteamento para as três abas principais: Dashboard, Loja e Perfil.
 
-- [ ] **PASSO 2: ECONOMIA E COINS (ARISE COINS & THE SHOP)**
-    - [ ] Adicionar a coluna `arise_coins` na tabela de usuários do Supabase.
+- [ ] **PASSO 2: ECONOMIA E COINS (ARISE COINS & LOJA)**
+    - [X] Adicionar a coluna `arise_coins` na tabela de usuários do Supabase.
     - [ ] Atualizar os hooks `useQuests` e `usePlayer` para que a conclusão de tarefas recompense o jogador com moedas (além do XP tradicional do Rank).
-    - [ ] Desenvolver a interface da **Loja do Sistema (The Shop)** com cards estilizados no tema Dark/Cyberpunk.
+    - [ ] Desenvolver a interface da **Loja do Sistema (Loja)** com cards estilizados no tema Dark/Cyberpunk.
     - [ ] Implementar a lógica de inventário/consumo para itens de recompensa real: *2 horas de lazer*, *Poção de Double XP* (ativa um multiplicador temporário no estado global do player).
 
 - [ ] **PASSO 3: INTEGRAÇÃO DO SCANNER DE IA (AVALIAÇÃO DE PORTÃO)**

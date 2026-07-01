@@ -18,7 +18,7 @@ export function usePlayer() {
 
       if (!data || data.length === 0) {
         // Fallback de contingência caso a trigger demore a responder
-        setPlayer({ id: userId, name: "MONARCA ADORMECIDO", level: 1, xp: 0, rank: "E", has_awakened: false });
+        setPlayer({ id: userId, name: "MONARCA ADORMECIDO", level: 1, xp: 0, rank: "E", has_awakened: false, arise_coins: 0 });
       } else {
         setPlayer(data[0]);
       }
