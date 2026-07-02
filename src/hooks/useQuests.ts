@@ -107,6 +107,14 @@ export function useQuests(player: UserData | null, setPlayer: React.Dispatch<Rea
 
       if (userError) throw userError;
 
+      if (!wasCompleted) {
+        // Se a tarefa foi concluída agora, mostra o ganho
+        notify.success(`Missão Concluída! +${xpReward} XP | 🪙 +${coinReward} AC`);
+      } else {
+        // Se ele desmarcou uma tarefa que já estava pronta, avisa a dedução
+        notify.error(`Missão Desmarcada. -${xpReward} XP | -${coinReward} AC`);
+      }
+
       // Atualiza o estado global/local do Player no React
       setPlayer((prev) => (prev ? { 
         ...prev, 
