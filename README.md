@@ -27,8 +27,8 @@ Abaixo está o planejamento de desenvolvimento para a consolidação da interfac
 
 - [ ] **PASSO 2: ECONOMIA E COINS (ARISE COINS & LOJA)**
     - [X] Adicionar a coluna `arise_coins` na tabela de usuários do Supabase.
-    - [ ] Atualizar os hooks `useQuests` e `usePlayer` para que a conclusão de tarefas recompense o jogador com moedas (além do XP tradicional do Rank).
-    - [ ] Desenvolver a interface da **Loja do Sistema (Loja)** com cards estilizados no tema Dark/Cyberpunk.
+    - [X] Atualizar os hooks `useQuests` e `usePlayer` para que a conclusão de tarefas recompense o jogador com moedas (além do XP tradicional do Rank).
+    - [X] Desenvolver a interface da **Loja do Sistema (Loja)** com cards estilizados no tema Dark/Cyberpunk.
     - [ ] Implementar a lógica de inventário/consumo para itens de recompensa real: *2 horas de lazer*, *Poção de Double XP* (ativa um multiplicador temporário no estado global do player).
 
 - [ ] **PASSO 3: INTEGRAÇÃO DO SCANNER DE IA (AVALIAÇÃO DE PORTÃO)**

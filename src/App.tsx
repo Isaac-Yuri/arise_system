@@ -3,6 +3,7 @@ import { Toaster } from "sonner";
 import Dashboard from "./pages/Dashboard";
 import Login from "./pages/Login";
 import Cadastro from "./pages/Cadastro";
+import Loja from "./pages/Loja";
 import { useAuth } from "./hooks/useAuth";
 
 import AppLayout from "./layouts/AppLayout";
@@ -41,7 +42,7 @@ const router = createBrowserRouter([
         element: <AppLayout />,
         children: [
           { path: "/", element: <Dashboard /> },
-          { path: "/loja", element: <div className="p-8 text-zinc-500 font-mono text-xs uppercase">[ Loja de Itens Bloqueada ]</div> },
+          { path: "/loja", element: <Loja /> },
           { path: "/perfil", element: <div className="p-8 text-zinc-500 font-mono text-xs uppercase">[ Status do Hunter Indisponível ]</div> },
         ],
       },
