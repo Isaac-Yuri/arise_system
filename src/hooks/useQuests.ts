@@ -54,7 +54,19 @@ export function useQuests(player: UserData | null, setPlayer: React.Dispatch<Rea
     if (!targetTask || !player) return;
 
     const questRank = (targetTask as any).difficulty_rank as QuestRank || "E";
-    const xpReward = GAME_CONFIG.xp.byRank[questRank] || 25;
+    let xpReward = GAME_CONFIG.xp.byRank[questRank] || 25;
+
+    // =========================================================================
+    // NOVO: VERIFICADOR DE DOUBLE XP BOOST ACTIVE
+    // =========================================================================
+    const boostUntil = localStorage.getItem("arise_xp_boost_until");
+    const isBoostActive = boostUntil ? Date.now() < parseInt(boostUntil) : false;
+
+    if (isBoostActive && !wasCompleted) {
+      xpReward = xpReward * 2; // Dobra a recompensa se o boost estiver ativo e estiver concluindo
+    }
+    // =========================================================================
+    
     const xpDelta = wasCompleted ? -xpReward : xpReward;
 
     const coinReward = GAME_CONFIG.coins.byRank[questRank] || 2;
