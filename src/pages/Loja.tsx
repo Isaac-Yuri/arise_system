@@ -58,9 +58,20 @@ export const CATALOGO_ITENS: ItemLoja[] = [
 ];
 
 export default function Loja() {
-  const { player, setPlayer } = usePlayer();
+  const { player, setPlayer, fetchPlayer} = usePlayer();
   const { inventory, fetchInventory, addItemToInventory, consumeItem } = useInventory(player?.id);
   const [isProcessing, setIsProcessing] = useState<string | null>(null);
+
+  // Insira este useEffect junto ao outro existente em Loja.tsx:
+  useEffect(() => {
+    async function sincronizarSistema() {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user && fetchPlayer) {
+        await fetchPlayer(user.id); // Força o app a puxar as Arise Coins atualizadas do banco
+      }
+    }
+    sincronizarSistema();
+  }, []);
 
   useEffect(() => {
     if (player?.id) fetchInventory();
@@ -155,7 +166,13 @@ export default function Loja() {
           <h2 className="mb-4 font-mono text-xs font-bold uppercase tracking-widest text-sky-400">🛒 Catálogo de Itens</h2>
           <div className="grid gap-4 sm:grid-cols-2">
             {CATALOGO_ITENS.map((item) => {
-              const naoTemSaldo = (player?.arise_coins ?? 0) < item.price;
+              // Garante que se o player ainda estiver carregando, não quebre e trate como 0 coins
+              const moedasAtuais = player?.arise_coins ?? 0;
+              const naoTemSaldo = moedasAtuais < item.price;
+              
+              // O botão só deve ser desativado rigidamente se realmete NÃO tiver saldo E o player já tiver sido carregado
+              const botaoDesabilitado = !player || naoTemSaldo || isProcessing !== null;
+
               return (
                 <div key={item.id} className="flex flex-col justify-between rounded-xl border border-zinc-800 bg-zinc-900/30 p-4">
                   <div>
@@ -166,15 +183,24 @@ export default function Loja() {
                     <h3 className="mt-3 font-mono text-sm font-bold text-zinc-200">{item.name}</h3>
                     <p className="mt-1 text-xs text-zinc-400 font-sans">{item.description}</p>
                   </div>
+                  
                   <button
                     type="button"
                     onClick={() => handleComprar(item)}
-                    disabled={isProcessing !== null}
+                    disabled={botaoDesabilitado}
                     className={`mt-4 w-full rounded-lg border py-2 font-mono text-[10px] font-bold uppercase tracking-widest transition-all ${
-                      naoTemSaldo ? "border-zinc-900 bg-zinc-950/20 text-zinc-700 cursor-not-allowed" : "border-zinc-700 hover:border-amber-500/50 text-amber-300"
+                      !player 
+                        ? "border-zinc-800 bg-zinc-950/20 text-zinc-600 cursor-wait"
+                        : naoTemSaldo 
+                          ? "border-zinc-900 bg-zinc-950/20 text-zinc-700 cursor-not-allowed" 
+                          : "border-amber-500/40 bg-amber-500/5 hover:bg-amber-500/10 text-amber-300 shadow-[0_0_15px_-5px_rgba(251,191,36,0.2)] active:scale-[0.98]"
                     }`}
                   >
-                    {isProcessing === `buy-${item.id}` ? "Comprando..." : "Adquirir Item"}
+                    {!player 
+                      ? "[ SINCRONIZANDO... ]" 
+                      : isProcessing === `buy-${item.id}` 
+                        ? "[ FORJANDO TRANSAÇÃO... ]" 
+                        : "[ ADQUIRIR ITEM ]"}
                   </button>
                 </div>
               );
