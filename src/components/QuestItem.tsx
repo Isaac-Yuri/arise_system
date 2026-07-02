@@ -5,7 +5,7 @@ interface DailyTask {
   id: string;
   title: string;
   is_completed: boolean;
-  difficulty_rank?: QuestRank; // Adicionado para suportar os novos Ranks do sistema
+  difficulty_rank?: QuestRank; 
 }
 
 interface QuestItemProps {
@@ -23,6 +23,9 @@ export function QuestItem({ task, onToggle, onDelete, onUpdateText }: QuestItemP
   const checked = task.is_completed;
   const rank: QuestRank = task.difficulty_rank || "E"; // Fallback caso seja uma tarefa antiga sem rank
   const xpReward = GAME_CONFIG.xp.byRank[rank];
+  
+  // PUXA A RECOMPENSA DE COINS DIRETAMENTE DO GAME_CONFIG
+  const coinReward = (GAME_CONFIG as any).coins?.byRank?.[rank] || 2;
 
   // Configuração de estilos visuais dinâmicos baseados no Rank da Missão
   const rankStyles: Record<QuestRank, { border: string; text: string; bg: string; shadow: string; badge: string }> = {
@@ -125,10 +128,14 @@ export function QuestItem({ task, onToggle, onDelete, onUpdateText }: QuestItemP
             <span className={`block truncate text-sm leading-snug transition-all select-none ${checked ? "text-zinc-500 line-through" : currentStyle.text}`}>
               {task.title}
             </span>
-            {/* O Badge com o Rank e a recompensa em XP */}
+            {/* O Badge com o Rank e as recompensas de XP e Arise Coins */}
             <div className="flex items-center">
-              <span className={`rounded px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-widest border ${checked ? "border-zinc-800 bg-zinc-950 text-zinc-600" : currentStyle.badge}`}>
-                Rank {rank} · +{xpReward} XP
+              <span className={`rounded px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-widest border flex items-center gap-1 ${checked ? "border-zinc-800 bg-zinc-950 text-zinc-600" : currentStyle.badge}`}>
+                <span>Rank {rank}</span>
+                <span>·</span>
+                <span>+{xpReward} XP</span>
+                <span>·</span>
+                <span className={checked ? "text-zinc-600" : "text-amber-400 font-bold"}>🪙 +{coinReward} AC</span>
               </span>
             </div>
           </div>

@@ -3,7 +3,10 @@ import { Toaster } from "sonner";
 import Dashboard from "./pages/Dashboard";
 import Login from "./pages/Login";
 import Cadastro from "./pages/Cadastro";
+import Loja from "./pages/Loja";
 import { useAuth } from "./hooks/useAuth";
+
+import AppLayout from "./layouts/AppLayout";
 
 /** Bloqueia acesso a rotas privadas para usuários não autenticados. */
 function PrivateRoute() {
@@ -34,11 +37,19 @@ const router = createBrowserRouter([
     // Rotas privadas — exigem login
     element: <PrivateRoute />,
     children: [
-      { path: "/", element: <Dashboard /> },
+      {
+        // Inserimos o AppLayout envolvendo as páginas privadas
+        element: <AppLayout />,
+        children: [
+          { path: "/", element: <Dashboard /> },
+          { path: "/loja", element: <Loja /> },
+          { path: "/perfil", element: <div className="p-8 text-zinc-500 font-mono text-xs uppercase">[ Status do Hunter Indisponível ]</div> },
+        ],
+      },
     ],
   },
   {
-    // Rotas públicas — redirecionam se já estiver logado
+    // Rotas públicas
     element: <PublicRoute />,
     children: [
       { path: "/login", element: <Login /> },

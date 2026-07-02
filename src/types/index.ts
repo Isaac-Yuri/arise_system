@@ -9,6 +9,7 @@ export interface UserData {
   xp: number;
   rank: QuestRank;
   has_awakened: boolean;
+  arise_coins: number;
 }
 
 export interface DailyTask {
