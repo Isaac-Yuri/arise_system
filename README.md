@@ -25,11 +25,11 @@ Abaixo está o planejamento de desenvolvimento para a consolidação da interfac
     - [X] Desenvolver um **Menu Responsivo**: Sidebar lateral fixa com efeito blur/neon para telas Desktop (`md:flex`) e uma Bottom Navigation Bar (barra inferior) compacta e anatômica para dispositivos Mobile (`md:hidden`).
     - [X] Configurar o roteamento para as três abas principais: Dashboard, Loja e Perfil.
 
-- [ ] **PASSO 2: ECONOMIA E COINS (ARISE COINS & LOJA)**
+- [X] **PASSO 2: ECONOMIA E COINS (ARISE COINS & LOJA)**
     - [X] Adicionar a coluna `arise_coins` na tabela de usuários do Supabase.
     - [X] Atualizar os hooks `useQuests` e `usePlayer` para que a conclusão de tarefas recompense o jogador com moedas (além do XP tradicional do Rank).
     - [X] Desenvolver a interface da **Loja do Sistema (Loja)** com cards estilizados no tema Dark/Cyberpunk.
-    - [ ] Implementar a lógica de inventário/consumo para itens de recompensa real: *2 horas de lazer*, *Poção de Double XP* (ativa um multiplicador temporário no estado global do player).
+    - [X] Implementar a lógica de inventário/consumo para itens de recompensa real: *2 horas de lazer*, *Poção de Double XP* (ativa um multiplicador temporário no estado global do player).
 
 - [ ] **PASSO 3: INTEGRAÇÃO DO SCANNER DE IA (AVALIAÇÃO DE PORTÃO)**
     - [ ] Configurar a integração direta do front-end com a API do Gemini utilizando chaves seguras ou através de uma Edge Function do Supabase.

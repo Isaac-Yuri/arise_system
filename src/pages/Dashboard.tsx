@@ -122,7 +122,7 @@ export default function Dashboard() {
         </section>
 
         <p className="text-center font-mono text-[10px] uppercase tracking-[0.3em] text-zinc-700">
-          Sistema Arise · v0.2
+          Sistema Arise · v0.2.5
         </p>
       </div>
     </main>
